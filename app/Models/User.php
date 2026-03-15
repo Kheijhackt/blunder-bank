@@ -50,4 +50,9 @@ class User extends Authenticatable
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
+
+    public function flashCards()
+    {
+        return $this->hasMany(FlashCard::class);
+    }
 }
