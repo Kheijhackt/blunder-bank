@@ -41,6 +41,16 @@ class FlashCardController extends Controller
             'correct_move' => 'required|string',
             'note' => 'nullable|string',
         ]);
+
+        FlashCard::create([
+            'user_id' => Auth::id(),
+            'fen' => $request->input('fen'),
+            'correct_move' => $request->input('correct_move'),
+            'note' => $request->input('note'),
+        ]);
+
+        return redirect()->route('addFlashCard')->with('success', 'Card created!');
+
     }
 
     /**
