@@ -19,6 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('api/flashcards', [FlashCardController::class, 'index'])->name('flashcards.index');
     Route::get('api/flashcards/{flashCard}', [FlashCardController::class,'show'])->name('flashcards.show');
     Route::patch('api/flashcards/{flashCard}', [FlashCardController::class, 'update'])->name('flashcards.update');
+    Route::delete('api/flashcards/{flashCard}', [FlashCardController::class, 'destroy'])->name('flashcards.destroy');
 });
 
 require __DIR__.'/settings.php';

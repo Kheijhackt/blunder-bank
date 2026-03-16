@@ -11,14 +11,14 @@ interface FlashCard {
     updated_at: string;
 }
 
-// Pass the ID as a prop instead of using URL params
 export default function EditFlashCard({ id }: { id: number }) {
     const [fen, setFen] = useState<string>('');
     const [correctMove, setCorrectMove] = useState<string>('');
     const [note, setNote] = useState<string>('');
     const [message, setMessage] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
-    id = 2; // for testing purposes
+
+    id = 3;
 
     // Fetch data from show() method on load
     useEffect(() => {
@@ -40,15 +40,12 @@ export default function EditFlashCard({ id }: { id: number }) {
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
         try {
-            // Use PATCH to update
             await axios.patch(`/api/flashcards/${id}`, {
                 fen,
                 correct_move: correctMove,
                 note,
             });
-
             setMessage('Flash card updated successfully!');
         } catch (err: any) {
             console.error(err);
@@ -56,6 +53,28 @@ export default function EditFlashCard({ id }: { id: number }) {
                 err.response?.data?.message ||
                     err.response?.data?.result ||
                     'Error updating flash card',
+            );
+        }
+    };
+
+    const handleDelete = async () => {
+        if (
+            !window.confirm('Are you sure you want to delete this flashcard?')
+        ) {
+            return;
+        }
+
+        try {
+            await axios.delete(`/api/flashcards/${id}`);
+            setMessage('Flash card deleted successfully!');
+            // Optional: Clear form or redirect parent component
+            setFen('');
+            setCorrectMove('');
+            setNote('');
+        } catch (err: any) {
+            console.error(err);
+            setMessage(
+                err.response?.data?.message || 'Error deleting flash card',
             );
         }
     };
@@ -91,7 +110,26 @@ export default function EditFlashCard({ id }: { id: number }) {
                         onChange={(e) => setNote(e.target.value)}
                     />
                 </div>
-                <button type="submit">Update Flash Card</button>
+
+                <div style={{ marginTop: '10px' }}>
+                    <button type="submit">Update Flash Card</button>
+
+                    {/* Delete Button */}
+                    <button
+                        type="button"
+                        onClick={handleDelete}
+                        style={{
+                            marginLeft: '10px',
+                            backgroundColor: '#ef4444',
+                            color: 'white',
+                            border: 'none',
+                            padding: '5px 10px',
+                            cursor: 'pointer',
+                        }}
+                    >
+                        Delete
+                    </button>
+                </div>
             </form>
             {message && <p>{message}</p>}
         </div>

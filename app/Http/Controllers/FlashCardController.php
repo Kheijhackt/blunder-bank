@@ -77,7 +77,7 @@ class FlashCardController extends Controller
         if (!$this->isAuthorized($flashCard)) {
             return $this->unauthorizedResponse();
         }
-        
+
         return response()->json([
             'flashcard' => $flashCard,
         ]);
@@ -130,6 +130,12 @@ class FlashCardController extends Controller
      */
     public function destroy(FlashCard $flashCard)
     {
-        //
+        if(!$this->isAuthorized($flashCard)) {
+            return $this->unauthorizedResponse();
+        }
+        $flashCard->delete();
+        return response()->json([
+            'result' => true,
+        ]);
     }
 }
