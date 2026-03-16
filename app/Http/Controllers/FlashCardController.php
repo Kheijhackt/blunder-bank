@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\FlashCard;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
 
 class FlashCardController extends Controller
 {
@@ -14,7 +14,13 @@ class FlashCardController extends Controller
      */
     public function index()
     {
-        //
+        // Shows the user's flashcards
+        $user = Auth::user();
+        $flashcards = $user->flashCards()->latest()->get();
+        $result = response()->json([
+            'flashcards' => $flashcards,
+        ]);
+        return $result;
     }
 
     /**
