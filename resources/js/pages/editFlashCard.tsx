@@ -18,9 +18,9 @@ export default function EditFlashCard({ id }: { id: number }) {
     const [message, setMessage] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
 
-    id = 3;
+    id = 3; // ONLY FOR TESTING PURPOSES - REMOVE
 
-    // Fetch data from show() method on load
+    // Fetch data from show() method on load OR fetch from the mass view when showing all flash cards
     useEffect(() => {
         axios
             .get(`/api/flashcards/${id}`)
