@@ -9,14 +9,24 @@ use Illuminate\Validation\Rule;
 
 class FlashCardController extends Controller
 {
+    // Inside your FlashCardController class
+
+    private function isAuthorized(FlashCard $flashCard): bool
+    {
+        return Auth::id() === $flashCard->user_id;
+    }
+    private function unauthorizedResponse() {
+        return response()->json([
+            'result' => 'Unauthorized',
+        ], 403);
+    }
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
         // Shows the user's flashcards
-        $user = Auth::user();
-        $flashcards = $user->flashCards()->latest()->get();
+        $flashcards = Auth::user()->flashCards()->latest()->get();
         $result = response()->json([
             'flashcards' => $flashcards,
         ]);
@@ -64,7 +74,13 @@ class FlashCardController extends Controller
      */
     public function show(FlashCard $flashCard)
     {
-        //
+        if (!$this->isAuthorized($flashCard)) {
+            return $this->unauthorizedResponse();
+        }
+        
+        return response()->json([
+            'flashcard' => $flashCard,
+        ]);
     }
 
     /**
@@ -80,17 +96,33 @@ class FlashCardController extends Controller
      */
     public function update(Request $request, FlashCard $flashCard)
     {
-        $request->validate([
-            'fen' => [
-                'required',
-                'string',
-                Rule::unique('flash_cards')->ignore($flashCard->id)->where(function ($query) {
-                    return $query->where('user_id', Auth::id());
-                }),
-            ],
-            'correct_move' => 'required|string',
-            'note' => 'nullable|string',
-        ]);
+        if(!$this->isAuthorized($flashCard)) {
+            return $this->unauthorizedResponse();
+        }
+        try {
+            $request->validate([
+                'fen' => [
+                    'required',
+                    'string',
+                    Rule::unique('flash_cards')->ignore($flashCard->id)->where(function ($query) {
+                        return $query->where('user_id', Auth::id());
+                    }),
+                ],
+                'correct_move' => 'required|string',
+                'note' => 'nullable|string',
+            ]);
+    
+            $flashCard->update($request->only(['fen', 'correct_move', 'note']));
+    
+            return response()->json([
+                'result' => true,
+            ]);
+        }
+        catch (\Exception $e) {
+            return response()->json([
+                'result'=> $e->getMessage(),
+            ]);
+        }
     }
 
     /**
