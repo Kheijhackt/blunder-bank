@@ -165,16 +165,17 @@ class FlashCardController extends Controller
         
         $answer = trim($request->answer);
         $correct = trim($flashCard->correct_move);
-        
         $isCorrect = ($answer === $correct);
 
         if ($isCorrect) {
             $flashCard->increment('times_correct');
             $flashCard->last_practiced_at = Carbon::now()->format('Y-m-d H:i:s');
-            $flashCard->save();
+            $flashCard->priority_score -= 0.01;
         } else {
             $flashCard->increment('times_wrong');
+            $flashCard->priority_score += 0.05;
         }
+        $flashCard->save();
 
         return response()->json([
             'result' => $isCorrect,
@@ -183,84 +184,58 @@ class FlashCardController extends Controller
 
     // Algorithm for which card to practice next
     public function getNextCard() {
-        
-        // 1. Fetch all user flashcards
-        $cards = Auth::user()->flashCards()->get();
+        $user = Auth::user();
 
-        if ($cards->isEmpty()) {
+        // 1. Fetch top 20 candidates efficiently using SQLite-friendly ordering
+        // Order: NULLs first (new cards), then highest static score.
+        $candidates = $user->flashCards()
+            ->orderByRaw('last_practiced_at IS NULL DESC') // TRUE (1) comes after FALSE (0)? Wait. 
+            // Correction: In SQLite, IS NULL returns 1 for true. We want NULLs FIRST.
+            // So we order by 'last_practiced_at IS NOT NULL' ASC (0 comes before 1).
+            ->orderByRaw('last_practiced_at IS NOT NULL ASC') 
+            ->orderByDesc('priority_score')
+            ->limit(20)
+            ->get();
+
+        if ($candidates->isEmpty()) {
             return response()->json([
-                'message' => 'No flashcards available. Create some first!',
+                'message' => 'No flashcards available.',
                 'flash_card' => null
             ], 404);
         }
 
         $now = Carbon::now();
-        $bestCard = $cards->first(); // Default to the first one if logic fails
-        $highestScore = PHP_FLOAT_MIN; // Start with the lowest possible number
+        $bestCard = null;
+        $highestDynamicScore = -999999;
 
-        foreach ($cards as $card) {
-            // --- SCORING ALGORITHM ---
+        foreach ($candidates as $card) {
+            $dynamicScore = $card->priority_score;
 
-            // A. Difficulty Factor (0 to 100)
-            // Prioritizes cards with high failure rates.
-            $totalAttempts = $card->times_correct + $card->times_wrong;
-            
-            // If new card (0 attempts), assume 50% difficulty so it gets picked up.
-            // If has attempts, calculate actual failure rate.
-            $failureRate = $totalAttempts === 0 
-                ? 0.5 
-                : ($card->times_wrong + 1) / ($totalAttempts + 1);
-                
-            $difficultyScore = $failureRate * 100; 
-
-            // B. Time Readiness Factor (Continuous Growth)
-            // Uses seconds/minutes so even short gaps increase the score.
-            $timeScore = 0;
-            
-            if ($card->last_practiced_at) {
-                // Get difference in minutes (float). 
-                // Example: 30 seconds = 0.5 minutes. 2 hours = 120 minutes.
-                $minutesSince = $now->diffInRealMinutes($card->last_practiced_at, false);
-                
-                // Ensure non-negative (in case of clock skew)
-                $minutesSince = max(0, $minutesSince);
-
-                // Logarithmic or Linear growth? 
-                // Let's use Linear: +1 point per minute. 
-                // So 1 hour ago = +60 points. 10 mins ago = +10 points.
-                // This ensures recently seen cards have LOW scores, but not negative.
-                $timeScore = $minutesSince * 1.5; 
+            if ($card->last_practiced_at === null) {
+                // New Card Bonus
+                $dynamicScore += 50.0;
+                // Tiny random nudge to shuffle new cards
+                $dynamicScore += (mt_rand() / mt_getrandmax()) * 0.001; 
             } else {
-                // Never practiced? Give maximum time bonus immediately.
-                $timeScore = 500; 
+                // Calculate minutes (Carbon works perfectly with SQLite timestamps)
+                $minutesSince = $now->diffInMinutes($card->last_practiced_at, false);
+                $minutesSince = max(0, $minutesSince);
+                
+                // Time Decay
+                $dynamicScore += ($minutesSince * 0.01);
             }
 
-            // C. "Recency" Soft Penalty (The Tie-Breaker)
-            // Instead of blocking, we just dampen the score if seen VERY recently.
-            // If seen within last 2 minutes, reduce score by 20%.
-            // This pushes it to the bottom of the list, but doesn't hide it.
-            $recencyMultiplier = 1.0;
-            if ($card->last_practiced_at) {
-                $secondsSince = $now->diffInSeconds($card->last_practiced_at, false);
-                if ($secondsSince < 120) { // Less than 2 minutes
-                    $recencyMultiplier = 0.5; // Cut the total score in half
-                }
-            }
-
-            // Final Calculation
-            $rawScore = $difficultyScore + $timeScore;
-            $finalScore = $rawScore * $recencyMultiplier;
-
-            // Select the highest scorer
-            if ($finalScore > $highestScore) {
-                $highestScore = $finalScore;
+            if ($dynamicScore > $highestDynamicScore) {
+                $highestDynamicScore = $dynamicScore;
                 $bestCard = $card;
             }
         }
 
-        // Always return a card if the list wasn't empty
         return response()->json([
-            'flash_card' => $bestCard
+            'flash_card' => $bestCard,
+            'debug_dynamic_score' => round($highestDynamicScore, 4),
+            'debug_static_score' => $bestCard->priority_score,
+            'is_new_card' => ($bestCard->last_practiced_at === null)
         ]);
     }
 }
