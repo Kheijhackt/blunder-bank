@@ -138,4 +138,35 @@ class FlashCardController extends Controller
             'result' => true,
         ]);
     }
+
+    // When a user attempts to answer a flashcard
+    public function answerAttempt(Request $request, FlashCard $flashCard) 
+    {
+        if(!$this->isAuthorized($flashCard)) {
+            return $this->unauthorizedResponse();
+        }
+        
+        $request->validate([
+            'answer' => 'required|string',
+        ]);
+        
+        $answer = trim($request->answer);
+        if ($answer === $flashCard->correct_move) {
+            $flashCard->increment('times_correct');
+            $result = true;
+        }
+        else {
+            $flashCard->increment('times_wrong');
+            $result = false;
+        }
+
+        $flashCard->update([
+            'last_practied_at'=> now(),
+        ]);
+
+        return response()->json([
+            'result' => $result,
+        ]);
+            
+    }
 }
