@@ -18,14 +18,14 @@ export default function EditFlashCard({ id }: { id: number }) {
     const [message, setMessage] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(true);
 
-    id = 3; // ONLY FOR TESTING PURPOSES - REMOVE
+    id = 5; // ONLY FOR TESTING PURPOSES - REMOVE
 
     // Fetch data from show() method on load OR fetch from the mass view when showing all flash cards
     useEffect(() => {
         axios
             .get(`/api/flashcards/${id}`)
-            .then((res: AxiosResponse<{ flashcard: FlashCard }>) => {
-                const card = res.data.flashcard;
+            .then((res: AxiosResponse<{ flash_card: FlashCard }>) => {
+                const card = res.data.flash_card;
                 setFen(card.fen);
                 setCorrectMove(card.correct_move);
                 setNote(card.note || '');

@@ -26,9 +26,9 @@ class FlashCardController extends Controller
     public function index()
     {
         // Shows the user's flashcards
-        $flashcards = Auth::user()->flashCards()->latest()->get();
+        $flashCards = Auth::user()->flashCards()->latest()->get();
         $result = response()->json([
-            'flashcards' => $flashcards,
+            'flash_cards' => $flashCards,
         ]);
         return $result;
     }
@@ -79,7 +79,7 @@ class FlashCardController extends Controller
         }
 
         return response()->json([
-            'flashcard' => $flashCard,
+            'flash_card' => $flashCard,
         ]);
     }
 
