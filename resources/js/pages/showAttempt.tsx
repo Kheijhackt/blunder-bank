@@ -20,7 +20,7 @@ export default function ShowAttempt({ id }: { id: number }) {
     const [loading, setLoading] = useState<boolean>(true);
     const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-    id = 1; // ONLY FOR TESTING PURPOSES - REMOVE
+    id = 5; // ONLY FOR TESTING PURPOSES - REMOVE
 
     // Fetch data (FEN and Note only for display)
     useEffect(() => {

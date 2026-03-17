@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FlashCard;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
@@ -56,13 +57,19 @@ class FlashCardController extends Controller
             ],
             'correct_move' => 'required|string',
             'note' => 'nullable|string',
+            'user_elo_at_time'=> 'nullable|integer',
+            'opening_name'=> 'nullable|string',
+            'source_game_url'=> 'nullable|string',
         ]);
 
         FlashCard::create([
             'user_id' => Auth::id(),
-            'fen' => $request->input('fen'),
-            'correct_move' => $request->input('correct_move'),
-            'note' => $request->input('note'),
+            'fen' => trim($request->input('fen')),
+            'correct_move' => trim($request->input('correct_move')),
+            'note' => trim($request->input('note')),
+            'user_elo_at_time' => trim($request->input('user_elo_at_time')),
+            'opening_name'=> trim($request->input('opening_name')),
+            'source_game_url'=> trim($request->input('source_game_url')),
         ]);
 
         return redirect()->route('addFlashCard')->with('success', 'Card created!');
@@ -110,9 +117,15 @@ class FlashCardController extends Controller
                 ],
                 'correct_move' => 'required|string',
                 'note' => 'nullable|string',
+                'user_elo_at_time'=> 'nullable|string',
+                'opening_name'=> 'nullable|string',
+                'source_game_url'=> 'nullable|string',
             ]);
     
-            $flashCard->update($request->only(['fen', 'correct_move', 'note']));
+            $flashCard->update($request->only(
+                [
+                    'fen', 'correct_move', 'note', 'user_elo_at_time','opening_name','source_game_url'
+                ]));
     
             return response()->json([
                 'result' => true,

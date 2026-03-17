@@ -15,6 +15,9 @@ class FlashCard extends Model
         'fen',
         'correct_move',
         'note',
+        'user_elo_at_time',
+        'opening_name',
+        'source_game_url',
     ];
 
     // Relationship back to User
