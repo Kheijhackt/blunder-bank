@@ -142,7 +142,7 @@ class FlashCardController extends Controller
     // When a user attempts to answer a flashcard
     public function answerAttempt(Request $request, FlashCard $flashCard) 
     {
-        if(!$this->isAuthorized($flashCard)) {
+        if (!$this->isAuthorized($flashCard)) {
             return $this->unauthorizedResponse();
         }
         
@@ -151,22 +151,103 @@ class FlashCardController extends Controller
         ]);
         
         $answer = trim($request->answer);
-        if ($answer === $flashCard->correct_move) {
-            $flashCard->increment('times_correct');
-            $result = true;
-        }
-        else {
-            $flashCard->increment('times_wrong');
-            $result = false;
-        }
+        $correct = trim($flashCard->correct_move);
+        
+        $isCorrect = ($answer === $correct);
 
-        $flashCard->update([
-            'last_practied_at'=> now(),
-        ]);
+        if ($isCorrect) {
+            $flashCard->increment('times_correct');
+            $flashCard->last_practiced_at = Carbon::now()->format('Y-m-d H:i:s');
+            $flashCard->save();
+        } else {
+            $flashCard->increment('times_wrong');
+        }
 
         return response()->json([
-            'result' => $result,
+            'result' => $isCorrect,
         ]);
+    }
+
+    // Algorithm for which card to practice next
+    public function getNextCard() {
+        
+        // 1. Fetch all user flashcards
+        $cards = Auth::user()->flashCards()->get();
+
+        if ($cards->isEmpty()) {
+            return response()->json([
+                'message' => 'No flashcards available. Create some first!',
+                'flash_card' => null
+            ], 404);
+        }
+
+        $now = Carbon::now();
+        $bestCard = $cards->first(); // Default to the first one if logic fails
+        $highestScore = PHP_FLOAT_MIN; // Start with the lowest possible number
+
+        foreach ($cards as $card) {
+            // --- SCORING ALGORITHM ---
+
+            // A. Difficulty Factor (0 to 100)
+            // Prioritizes cards with high failure rates.
+            $totalAttempts = $card->times_correct + $card->times_wrong;
             
+            // If new card (0 attempts), assume 50% difficulty so it gets picked up.
+            // If has attempts, calculate actual failure rate.
+            $failureRate = $totalAttempts === 0 
+                ? 0.5 
+                : ($card->times_wrong + 1) / ($totalAttempts + 1);
+                
+            $difficultyScore = $failureRate * 100; 
+
+            // B. Time Readiness Factor (Continuous Growth)
+            // Uses seconds/minutes so even short gaps increase the score.
+            $timeScore = 0;
+            
+            if ($card->last_practiced_at) {
+                // Get difference in minutes (float). 
+                // Example: 30 seconds = 0.5 minutes. 2 hours = 120 minutes.
+                $minutesSince = $now->diffInRealMinutes($card->last_practiced_at, false);
+                
+                // Ensure non-negative (in case of clock skew)
+                $minutesSince = max(0, $minutesSince);
+
+                // Logarithmic or Linear growth? 
+                // Let's use Linear: +1 point per minute. 
+                // So 1 hour ago = +60 points. 10 mins ago = +10 points.
+                // This ensures recently seen cards have LOW scores, but not negative.
+                $timeScore = $minutesSince * 1.5; 
+            } else {
+                // Never practiced? Give maximum time bonus immediately.
+                $timeScore = 500; 
+            }
+
+            // C. "Recency" Soft Penalty (The Tie-Breaker)
+            // Instead of blocking, we just dampen the score if seen VERY recently.
+            // If seen within last 2 minutes, reduce score by 20%.
+            // This pushes it to the bottom of the list, but doesn't hide it.
+            $recencyMultiplier = 1.0;
+            if ($card->last_practiced_at) {
+                $secondsSince = $now->diffInSeconds($card->last_practiced_at, false);
+                if ($secondsSince < 120) { // Less than 2 minutes
+                    $recencyMultiplier = 0.5; // Cut the total score in half
+                }
+            }
+
+            // Final Calculation
+            $rawScore = $difficultyScore + $timeScore;
+            $finalScore = $rawScore * $recencyMultiplier;
+
+            // Select the highest scorer
+            if ($finalScore > $highestScore) {
+                $highestScore = $finalScore;
+                $bestCard = $card;
+            }
+        }
+
+        // Always return a card if the list wasn't empty
+        return response()->json([
+            'flash_card' => $bestCard
+        ]);
     }
 }
