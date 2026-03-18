@@ -19,7 +19,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
-import { blundersList, dashboard } from '@/routes';
+import { blundersList, dashboard, practiceFlashCards } from '@/routes';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -35,7 +35,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Practice',
-        href: '#',
+        href: practiceFlashCards(),
         icon: Goal,
     },
 ];
