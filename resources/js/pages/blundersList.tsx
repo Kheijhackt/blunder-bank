@@ -10,17 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
-
-// Icons (Make sure you have lucide-react: npm install lucide-react)
 import { Filter, RotateCcw, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+// ✅ Import the new Modal
+import EditCardModal from '@/components/editCardModal';
+
+// Utils
+import { getFenImageData } from '@/utils/chess';
 
 interface FlashCard {
     id: number;
@@ -38,36 +35,8 @@ interface FlashCard {
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
-    {
-        title: 'Blunders List',
-        href: blundersList(),
-    },
+    { title: 'Blunders List', href: blundersList() },
 ];
-
-// --- Helpers ---
-
-const validateFEN = (fen: string): boolean => {
-    if (!fen || typeof fen !== 'string') return false;
-    const parts = fen.trim().split(/\s+/);
-    if (parts.length < 2) return false;
-    const board = parts[0];
-    const activeColor = parts[1];
-    const boardRegex = /^[prnbqkPRNBQK1-8\/]+$/;
-    if (!boardRegex.test(board)) return false;
-    if (activeColor !== 'w' && activeColor !== 'b') return false;
-    return true;
-};
-
-const getFenImageData = (fen: string) => {
-    if (!validateFEN(fen)) return { isValid: false, imageUrl: '' };
-    const parts = fen.trim().split(/\s+/);
-    const pov = parts[1].toLowerCase() === 'b' ? 'black' : 'white';
-    const encodedFen = encodeURIComponent(parts.join(' '));
-    return {
-        isValid: true,
-        imageUrl: `https://fen2image.chessvision.ai/${encodedFen}?pov=${pov}`,
-    };
-};
 
 const calculateAccuracy = (correct: number, wrong: number) => {
     const total = correct + wrong;
@@ -94,19 +63,20 @@ export default function BlundersList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // --- Filter States ---
+    // Modal State
+    const [editingCard, setEditingCard] = useState<FlashCard | null>(null);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Filter States
     const [searchQuery, setSearchQuery] = useState('');
     const [accuracyMin, setAccuracyMin] = useState<number>(0);
     const [accuracyMax, setAccuracyMax] = useState<number>(100);
     const [eloMin, setEloMin] = useState<number | ''>('');
     const [eloMax, setEloMax] = useState<number | ''>('');
-
-    // Date Filters (ISO strings YYYY-MM-DD)
     const [createdFrom, setCreatedFrom] = useState<string>('');
     const [createdTo, setCreatedTo] = useState<string>('');
     const [practicedFrom, setPracticedFrom] = useState<string>('');
     const [practicedTo, setPracticedTo] = useState<string>('');
-
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     useEffect(() => {
@@ -127,11 +97,8 @@ export default function BlundersList() {
         fetchCards();
     }, []);
 
-    // --- Filtering Logic ---
-    // --- Filtering Logic (Memoized for performance) ---
     const filteredCards = useMemo(() => {
         return cards.filter((card) => {
-            // 1. Search (Note OR Opening)
             if (searchQuery) {
                 const query = searchQuery.toLowerCase();
                 const noteMatch = card.note?.toLowerCase().includes(query);
@@ -140,15 +107,11 @@ export default function BlundersList() {
                     .includes(query);
                 if (!noteMatch && !openingMatch) return false;
             }
-
-            // 2. Accuracy %
             const accuracy = calculateAccuracy(
                 card.times_correct,
                 card.times_wrong,
             );
             if (accuracy < accuracyMin || accuracy > accuracyMax) return false;
-
-            // 3. ELO
             const elo = card.user_elo_at_time;
             if (elo !== null && elo !== undefined) {
                 if (eloMin !== '' && elo < eloMin) return false;
@@ -156,9 +119,7 @@ export default function BlundersList() {
             } else {
                 if (eloMin !== '' || eloMax !== '') return false;
             }
-
-            // 4. Created At Dates
-            const createdAt = parseDate(card.created_at); // created_at is usually required, but safe to add ?? null if needed
+            const createdAt = parseDate(card.created_at);
             if (createdAt) {
                 if (createdFrom && createdAt < new Date(createdFrom))
                     return false;
@@ -168,13 +129,9 @@ export default function BlundersList() {
                     if (createdAt > toDate) return false;
                 }
             }
-
-            // 5. Last Practiced Dates ✅ FIXED HERE
             const practicedAt = parseDate(card.last_practiced_at ?? null);
-
             if (practicedFrom || practicedTo) {
-                if (!practicedAt) return false; // If filtering by date but card has no date, exclude
-
+                if (!practicedAt) return false;
                 if (practicedFrom && practicedAt < new Date(practicedFrom))
                     return false;
                 if (practicedTo) {
@@ -183,7 +140,6 @@ export default function BlundersList() {
                     if (practicedAt > toDate) return false;
                 }
             }
-
             return true;
         });
     }, [
@@ -209,6 +165,28 @@ export default function BlundersList() {
         setCreatedTo('');
         setPracticedFrom('');
         setPracticedTo('');
+    };
+
+    const handleEditClick = (card: FlashCard) => {
+        setEditingCard(card);
+        setIsModalOpen(true);
+    };
+
+    const handleModalSuccess = () => {
+        // Refresh the list after successful update/delete
+        const fetchCards = async () => {
+            try {
+                const response = await axios.get('/api/flashcards');
+                const data = Array.isArray(response.data)
+                    ? response.data
+                    : response.data.flash_cards || [];
+                setCards(data);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+        fetchCards();
+        setEditingCard(null);
     };
 
     if (loading) {
@@ -271,12 +249,10 @@ export default function BlundersList() {
                         />
                     </div>
 
-                    {/* Collapsible Filter Panel */}
-                    {/* Collapsible Filter Panel - FIXED WIDTHS */}
+                    {/* Filter Panel */}
                     {isFilterOpen && (
                         <div className="animate-in rounded-lg border bg-card p-4 fade-in slide-in-from-top-2">
                             <div className="flex flex-wrap items-end gap-4">
-                                {/* 1. Accuracy (Fixed Width & Compact) */}
                                 <div className="flex w-[160px] shrink-0 flex-col gap-1.5">
                                     <Label className="text-[10px] font-bold tracking-wider uppercase">
                                         Accuracy (%)
@@ -313,8 +289,6 @@ export default function BlundersList() {
                                         />
                                     </div>
                                 </div>
-
-                                {/* 2. ELO (Fixed Width & Compact - SAME as Accuracy) */}
                                 <div className="flex w-[160px] shrink-0 flex-col gap-1.5">
                                     <Label className="text-[10px] font-bold tracking-wider uppercase">
                                         User ELO
@@ -355,8 +329,6 @@ export default function BlundersList() {
                                         />
                                     </div>
                                 </div>
-
-                                {/* 3. Created Date (Wide - Takes Remaining Space) */}
                                 <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
                                     <Label className="text-[10px] font-bold tracking-wider uppercase">
                                         Created Date
@@ -383,8 +355,6 @@ export default function BlundersList() {
                                         />
                                     </div>
                                 </div>
-
-                                {/* 4. Last Practiced (Wide - Takes Remaining Space) */}
                                 <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
                                     <Label className="text-[10px] font-bold tracking-wider uppercase">
                                         Last Practiced
@@ -411,8 +381,6 @@ export default function BlundersList() {
                                         />
                                     </div>
                                 </div>
-
-                                {/* Reset Button */}
                                 <div className="ml-auto pb-[2px]">
                                     <Button
                                         variant="ghost"
@@ -467,7 +435,6 @@ export default function BlundersList() {
                                         card.times_correct,
                                         card.times_wrong,
                                     );
-
                                     let accuracyVariant:
                                         | 'default'
                                         | 'destructive'
@@ -489,7 +456,6 @@ export default function BlundersList() {
                                                     )}
                                                 </span>
                                             </div>
-
                                             <div className="relative aspect-square w-full overflow-hidden rounded-md border border-muted bg-white">
                                                 {isValid ? (
                                                     <img
@@ -508,7 +474,6 @@ export default function BlundersList() {
                                                     </div>
                                                 )}
                                             </div>
-
                                             <div className="space-y-1">
                                                 <div>
                                                     <span className="text-[10px] font-bold text-muted-foreground uppercase">
@@ -519,7 +484,6 @@ export default function BlundersList() {
                                                     </p>
                                                 </div>
                                             </div>
-
                                             <div className="grid grid-cols-2 gap-2 text-[11px]">
                                                 <div>
                                                     <span className="block font-bold text-muted-foreground uppercase">
@@ -559,7 +523,6 @@ export default function BlundersList() {
                                                     </span>
                                                 </div>
                                             </div>
-
                                             <div className="mt-auto flex items-center justify-between border-t border-sidebar-border/50 pt-3">
                                                 <Badge
                                                     variant={accuracyVariant}
@@ -576,7 +539,9 @@ export default function BlundersList() {
                                                         rel="noopener noreferrer"
                                                         className="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80 hover:underline"
                                                     >
-                                                        <span>🔗 Source</span>
+                                                        <span>
+                                                            🔗 Game Source
+                                                        </span>
                                                     </a>
                                                 ) : (
                                                     <span className="text-xs text-muted-foreground italic">
@@ -584,17 +549,13 @@ export default function BlundersList() {
                                                     </span>
                                                 )}
                                             </div>
-
                                             <div className="pt-1">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
                                                     className="h-8 w-full text-xs"
                                                     onClick={() =>
-                                                        console.log(
-                                                            'Edit card',
-                                                            card.id,
-                                                        )
+                                                        handleEditClick(card)
                                                     }
                                                 >
                                                     Edit Card
@@ -608,6 +569,14 @@ export default function BlundersList() {
                     </>
                 )}
             </div>
+
+            {/* ✅ Edit Modal */}
+            <EditCardModal
+                open={isModalOpen}
+                onOpenChange={setIsModalOpen}
+                card={editingCard}
+                onSuccess={handleModalSuccess}
+            />
         </AppLayout>
     );
 }
