@@ -1,5 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { dashboard, login, register, guide } from '@/routes';
+import { dashboard, login, register, guide, blundersList } from '@/routes';
 import {
     BrainCircuit,
     Target,
@@ -9,6 +9,7 @@ import {
     Zap,
     PenTool,
 } from 'lucide-react';
+import ShowGuideContent from '@/components/showGuideContent';
 
 export default function Welcome({
     canRegister = true,
@@ -59,11 +60,10 @@ export default function Welcome({
                 </header>
 
                 {/* Main Content Area */}
-                <main className="flex flex-1 items-center justify-center p-4 lg:p-8">
-                    <div className="mx-auto grid w-full max-w-6xl gap-12 lg:grid-cols-2 lg:items-center">
-                        {/* Left Column: Text & Value Prop */}
-                        <div className="flex flex-col justify-center space-y-8 text-center lg:text-left">
-                            <div className="space-y-4">
+                <main className="flex flex-1 items-center justify-center p-4 lg:p-6">
+                    <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-2 lg:items-center">
+                        <div className="flex flex-col justify-center space-y-6 text-center lg:text-left">
+                            <div className="space-y-3">
                                 <div className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-medium text-orange-700 dark:border-orange-900 dark:bg-orange-950 dark:text-orange-300">
                                     <ShieldCheck className="mr-2 h-3 w-3" />
                                     Not an Engine. A Personal Coach.
@@ -164,12 +164,12 @@ export default function Welcome({
                                         <ArrowRight className="ml-2 h-4 w-4" />
                                     </Link>
                                 )}
-                                <Link
-                                    href={guide()}
+                                <a
+                                    href="#show-guide"
                                     className="inline-flex items-center justify-center rounded-md border border-input bg-background px-8 py-3 text-base font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground"
                                 >
                                     Learn More
-                                </Link>
+                                </a>
                             </div>
                         </div>
 
@@ -257,8 +257,33 @@ export default function Welcome({
                     </div>
                 </main>
 
+                <div
+                    id="show-guide"
+                    className="mx-auto mt-40 w-full max-w-5xl scroll-mt-40"
+                >
+                    <ShowGuideContent />
+                    <div className="flex flex-col justify-center gap-3 sm:flex-row">
+                        {auth.user ? (
+                            <Link
+                                href={blundersList()}
+                                className="inline-flex items-center justify-center rounded-md bg-[#f53003] px-8 py-3 text-base font-medium text-white shadow transition-colors hover:bg-[#d12c02] dark:bg-[#FF4433] dark:hover:bg-[#ff2211]"
+                            >
+                                View Library
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        ) : (
+                            <Link
+                                href={register()}
+                                className="inline-flex items-center justify-center rounded-md bg-[#f53003] px-8 py-3 text-base font-medium text-white shadow transition-colors hover:bg-[#d12c02] dark:bg-[#FF4433] dark:hover:bg-[#ff2211]"
+                            >
+                                Start Building Library
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        )}
+                    </div>
+                </div>
                 {/* Footer Simple */}
-                <footer className="py-6 text-center text-xs text-muted-foreground">
+                <footer className="py-5 pt-20 text-center text-xs text-muted-foreground">
                     <p>
                         © {new Date().getFullYear()} Blunder Bank. Made by
                         Calify
