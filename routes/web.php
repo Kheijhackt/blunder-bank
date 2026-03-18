@@ -13,6 +13,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
     Route::inertia('blunders-list','blundersList')->name('blundersList');
     Route::inertia('practice-blunders','practiceFlashCards')->name('practiceFlashCards');
+    Route::inertia('focused-practice-blunders','focusedPracticeFlashCards')->name('focusedPracticeFlashCards');
 
     Route::inertia('add-flashcard','addFlashCard')->name('addFlashCard');
     Route::inertia('edit-flashcard','editFlashCard')->name('editFlashCard');
