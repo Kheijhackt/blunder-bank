@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { blundersList, practiceFlashCards } from '@/routes';
+import { practiceFlashCards } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
@@ -21,7 +21,7 @@ import {
     Lightbulb,
     ArrowRight,
     Loader2,
-    // SkipForward removed
+    AlertCircle,
 } from 'lucide-react';
 
 interface FlashCard {
@@ -220,21 +220,37 @@ export default function PracticeFlashcards() {
                 <Card className="overflow-hidden border-2 shadow-lg">
                     <CardContent className="grid grid-cols-1 p-0 md:grid-cols-2">
                         {/* Left: Board Image */}
-                        <div className="relative flex aspect-square items-center justify-center bg-muted p-4 md:aspect-auto">
-                            {isValid && imageUrl ? (
-                                <img
-                                    src={imageUrl}
-                                    alt="Chess Position"
-                                    className="h-full w-full rounded-lg object-cover shadow-sm"
-                                    style={{ objectPosition: 'top' }}
-                                />
-                            ) : (
-                                <div className="text-sm text-muted-foreground">
-                                    Invalid Position
-                                </div>
-                            )}
+                        <div className="flex flex-col items-center justify-center space-y-3 p-4">
+                            <div className="space-y-1 text-center">
+                                <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                    Position Preview
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    {isValid
+                                        ? card.fen.split(' ')[1] === 'w'
+                                            ? 'White to Move'
+                                            : 'Black to Move'
+                                        : 'Invalid Position'}
+                                </p>
+                            </div>
 
-                            {/* Meta Badges Overlay REMOVED (Moved to right side) */}
+                            <div className="relative aspect-square w-full max-w-[360px] overflow-hidden rounded-md border bg-white shadow-sm">
+                                {imageUrl ? (
+                                    <img
+                                        src={imageUrl}
+                                        alt="Board Preview"
+                                        className="h-full w-full object-cover"
+                                        style={{ objectPosition: 'top' }}
+                                    />
+                                ) : (
+                                    <div className="flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground">
+                                        <AlertCircle className="mb-2 h-8 w-8 opacity-50" />
+                                        <span className="text-sm font-medium">
+                                            Invalid FEN
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
                         {/* Right: Interaction Area */}
