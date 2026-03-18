@@ -187,7 +187,17 @@ export default function FocusedPracticeFlashcards() {
     // Start Session
     const startSession = () => {
         if (filteredCards.length === 0) return;
-        setSessionQueue(filteredCards);
+
+        // Create a copy to avoid mutating the original filtered list
+        const shuffled = [...filteredCards];
+
+        // Fisher-Yates Shuffle Algorithm
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+
+        setSessionQueue(shuffled);
         setCurrentIndex(0);
         setIsSessionActive(true);
         setSessionComplete(false);
@@ -485,34 +495,19 @@ export default function FocusedPracticeFlashcards() {
                                 </div>
 
                                 {/* Navigation Controls */}
-                                <div className="flex items-center justify-between border-t pt-4">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handlePrev}
-                                        disabled={
-                                            currentIndex === 0 || submitting
-                                        }
-                                    >
-                                        <ChevronLeft className="mr-2 h-4 w-4" />{' '}
-                                        Previous
-                                    </Button>
-                                    <span className="text-xs text-muted-foreground">
-                                        Use Enter to submit
-                                    </span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={handleNext}
-                                        disabled={
-                                            currentIndex ===
-                                                sessionQueue.length - 1 ||
-                                            submitting
-                                        }
-                                    >
-                                        Next{' '}
-                                        <ChevronRight className="ml-2 h-4 w-4" />
-                                    </Button>
+                                {/* Footer Info */}
+                                <div className="border-t pt-4">
+                                    <p className="text-center text-xs text-muted-foreground">
+                                        Type standard algebraic notation (e.g.,{' '}
+                                        <span className="rounded bg-muted px-1 font-mono">
+                                            Nf3
+                                        </span>
+                                        ,{' '}
+                                        <span className="rounded bg-muted px-1 font-mono">
+                                            O-O
+                                        </span>
+                                        ).
+                                    </p>
                                 </div>
                             </div>
                         </CardContent>
@@ -559,8 +554,8 @@ export default function FocusedPracticeFlashcards() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Focused Practice Setup" />
-            <div className="mx-auto flex h-full w-full max-w-5xl flex-1 flex-col gap-6 p-6">
-                <div>
+            <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                <div className="pb-2">
                     <h1 className="text-2xl font-bold tracking-tight">
                         Focused Practice
                     </h1>
