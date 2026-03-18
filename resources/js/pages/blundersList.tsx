@@ -13,8 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Filter, RotateCcw, Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-// ✅ Import the new Modal
+// ✅ Import BOTH Modals
 import EditCardModal from '@/components/editCardModal';
+import NewCardModal from '@/components/newCardModal';
 
 // Utils
 import { getFenImageData } from '@/utils/chess';
@@ -63,9 +64,12 @@ export default function BlundersList() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Modal State
+    // ✅ Edit Modal State
     const [editingCard, setEditingCard] = useState<FlashCard | null>(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+
+    // ✅ New Modal State
+    const [isNewModalOpen, setIsNewModalOpen] = useState(false);
 
     // Filter States
     const [searchQuery, setSearchQuery] = useState('');
@@ -167,13 +171,19 @@ export default function BlundersList() {
         setPracticedTo('');
     };
 
+    // ✅ Handler for Edit
     const handleEditClick = (card: FlashCard) => {
         setEditingCard(card);
-        setIsModalOpen(true);
+        setIsEditModalOpen(true);
     };
 
+    // ✅ Handler for New
+    const handleNewClick = () => {
+        setIsNewModalOpen(true);
+    };
+
+    // ✅ Shared Success Handler (Refreshes list)
     const handleModalSuccess = () => {
-        // Refresh the list after successful update/delete
         const fetchCards = async () => {
             try {
                 const response = await axios.get('/api/flashcards');
@@ -225,13 +235,8 @@ export default function BlundersList() {
                                 {filteredCards.length !== cards.length &&
                                     `(${filteredCards.length})`}
                             </Button>
-                            <Button
-                                size="sm"
-                                onClick={() =>
-                                    (window.location.href =
-                                        '/flashcards/create')
-                                }
-                            >
+                            {/* ✅ Updated Button to Open Modal */}
+                            <Button size="sm" onClick={handleNewClick}>
                                 + Add New
                             </Button>
                         </div>
@@ -572,9 +577,16 @@ export default function BlundersList() {
 
             {/* ✅ Edit Modal */}
             <EditCardModal
-                open={isModalOpen}
-                onOpenChange={setIsModalOpen}
+                open={isEditModalOpen}
+                onOpenChange={setIsEditModalOpen}
                 card={editingCard}
+                onSuccess={handleModalSuccess}
+            />
+
+            {/* ✅ New Modal */}
+            <NewCardModal
+                open={isNewModalOpen}
+                onOpenChange={setIsNewModalOpen}
                 onSuccess={handleModalSuccess}
             />
         </AppLayout>
