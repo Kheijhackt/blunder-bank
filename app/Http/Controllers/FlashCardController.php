@@ -169,7 +169,7 @@ class FlashCardController extends Controller
 
         if ($isCorrect) {
             $flashCard->increment('times_correct');
-            $flashCard->last_practiced_at = Carbon::now()->format('Y-m-d H:i:s');
+            $flashCard->last_practiced_at = Carbon::now();
             $flashCard->priority_score -= 0.01;
         } else {
             $flashCard->increment('times_wrong');

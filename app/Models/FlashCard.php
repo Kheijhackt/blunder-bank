@@ -20,6 +20,10 @@ class FlashCard extends Model
         'source_game_url',
     ];
 
+    protected $casts = [
+        'last_practiced_at'=> 'datetime',
+    ];
+
     // Relationship back to User
     public function user()
     {
