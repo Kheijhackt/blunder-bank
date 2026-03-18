@@ -2,12 +2,25 @@ import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import { blundersList } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
 
 // Shadcn Components
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+
+// Icons (Make sure you have lucide-react: npm install lucide-react)
+import { Filter, RotateCcw, Search } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface FlashCard {
     id: number;
@@ -31,7 +44,8 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// Validation Function
+// --- Helpers ---
+
 const validateFEN = (fen: string): boolean => {
     if (!fen || typeof fen !== 'string') return false;
     const parts = fen.trim().split(/\s+/);
@@ -44,31 +58,56 @@ const validateFEN = (fen: string): boolean => {
     return true;
 };
 
-// Helper for Image Data
 const getFenImageData = (fen: string) => {
-    if (!validateFEN(fen)) {
-        return { isValid: false, turn: 'white', imageUrl: '' };
-    }
+    if (!validateFEN(fen)) return { isValid: false, imageUrl: '' };
     const parts = fen.trim().split(/\s+/);
-    const turnChar = parts[1].toLowerCase();
-    const pov = turnChar === 'b' ? 'black' : 'white';
-    const cleanFen = parts.join(' ');
-    const encodedFen = encodeURIComponent(cleanFen);
-    const imageUrl = `https://fen2image.chessvision.ai/${encodedFen}?pov=${pov}`;
-    return { isValid: true, turn: pov, imageUrl };
+    const pov = parts[1].toLowerCase() === 'b' ? 'black' : 'white';
+    const encodedFen = encodeURIComponent(parts.join(' '));
+    return {
+        isValid: true,
+        imageUrl: `https://fen2image.chessvision.ai/${encodedFen}?pov=${pov}`,
+    };
 };
 
-// Helper for Accuracy Percentage
 const calculateAccuracy = (correct: number, wrong: number) => {
     const total = correct + wrong;
     if (total === 0) return 0;
     return Math.round((correct / total) * 100);
 };
 
+const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Never';
+    return new Date(dateString).toLocaleDateString(undefined, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+    });
+};
+
+const parseDate = (dateString: string | null) => {
+    if (!dateString) return null;
+    return new Date(dateString);
+};
+
 export default function BlundersList() {
     const [cards, setCards] = useState<FlashCard[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+
+    // --- Filter States ---
+    const [searchQuery, setSearchQuery] = useState('');
+    const [accuracyMin, setAccuracyMin] = useState<number>(0);
+    const [accuracyMax, setAccuracyMax] = useState<number>(100);
+    const [eloMin, setEloMin] = useState<number | ''>('');
+    const [eloMax, setEloMax] = useState<number | ''>('');
+
+    // Date Filters (ISO strings YYYY-MM-DD)
+    const [createdFrom, setCreatedFrom] = useState<string>('');
+    const [createdTo, setCreatedTo] = useState<string>('');
+    const [practicedFrom, setPracticedFrom] = useState<string>('');
+    const [practicedTo, setPracticedTo] = useState<string>('');
+
+    const [isFilterOpen, setIsFilterOpen] = useState(false);
 
     useEffect(() => {
         const fetchCards = async () => {
@@ -88,15 +127,88 @@ export default function BlundersList() {
         fetchCards();
     }, []);
 
-    const formatDate = (dateString: string | null) => {
-        if (!dateString) return 'Never';
-        return new Date(dateString).toLocaleDateString(undefined, {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
+    // --- Filtering Logic ---
+    // --- Filtering Logic (Memoized for performance) ---
+    const filteredCards = useMemo(() => {
+        return cards.filter((card) => {
+            // 1. Search (Note OR Opening)
+            if (searchQuery) {
+                const query = searchQuery.toLowerCase();
+                const noteMatch = card.note?.toLowerCase().includes(query);
+                const openingMatch = card.opening_name
+                    ?.toLowerCase()
+                    .includes(query);
+                if (!noteMatch && !openingMatch) return false;
+            }
+
+            // 2. Accuracy %
+            const accuracy = calculateAccuracy(
+                card.times_correct,
+                card.times_wrong,
+            );
+            if (accuracy < accuracyMin || accuracy > accuracyMax) return false;
+
+            // 3. ELO
+            const elo = card.user_elo_at_time;
+            if (elo !== null && elo !== undefined) {
+                if (eloMin !== '' && elo < eloMin) return false;
+                if (eloMax !== '' && elo > eloMax) return false;
+            } else {
+                if (eloMin !== '' || eloMax !== '') return false;
+            }
+
+            // 4. Created At Dates
+            const createdAt = parseDate(card.created_at); // created_at is usually required, but safe to add ?? null if needed
+            if (createdAt) {
+                if (createdFrom && createdAt < new Date(createdFrom))
+                    return false;
+                if (createdTo) {
+                    const toDate = new Date(createdTo);
+                    toDate.setHours(23, 59, 59, 999);
+                    if (createdAt > toDate) return false;
+                }
+            }
+
+            // 5. Last Practiced Dates ✅ FIXED HERE
+            const practicedAt = parseDate(card.last_practiced_at ?? null);
+
+            if (practicedFrom || practicedTo) {
+                if (!practicedAt) return false; // If filtering by date but card has no date, exclude
+
+                if (practicedFrom && practicedAt < new Date(practicedFrom))
+                    return false;
+                if (practicedTo) {
+                    const toDate = new Date(practicedTo);
+                    toDate.setHours(23, 59, 59, 999);
+                    if (practicedAt > toDate) return false;
+                }
+            }
+
+            return true;
         });
+    }, [
+        cards,
+        searchQuery,
+        accuracyMin,
+        accuracyMax,
+        eloMin,
+        eloMax,
+        createdFrom,
+        createdTo,
+        practicedFrom,
+        practicedTo,
+    ]);
+
+    const resetFilters = () => {
+        setSearchQuery('');
+        setAccuracyMin(0);
+        setAccuracyMax(100);
+        setEloMin('');
+        setEloMax('');
+        setCreatedFrom('');
+        setCreatedTo('');
+        setPracticedFrom('');
+        setPracticedTo('');
     };
 
     if (loading) {
@@ -117,19 +229,204 @@ export default function BlundersList() {
             <Head title="Blunders List" />
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
-                {/* Header */}
-                <div className="flex items-center justify-between pb-2">
-                    <h2 className="text-lg font-semibold">
-                        My Blunder Library
-                    </h2>
-                    <Button
-                        size="sm"
-                        onClick={() =>
-                            (window.location.href = '/flashcards/create')
-                        }
-                    >
-                        + Add New
-                    </Button>
+                {/* Header & Controls */}
+                <div className="flex flex-col gap-4 pb-2">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-lg font-semibold">
+                            My Blunder Library
+                        </h2>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setIsFilterOpen(!isFilterOpen)}
+                                className={cn(isFilterOpen && 'bg-muted')}
+                            >
+                                <Filter className="mr-2 h-4 w-4" />
+                                Filters{' '}
+                                {filteredCards.length !== cards.length &&
+                                    `(${filteredCards.length})`}
+                            </Button>
+                            <Button
+                                size="sm"
+                                onClick={() =>
+                                    (window.location.href =
+                                        '/flashcards/create')
+                                }
+                            >
+                                + Add New
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Search Bar */}
+                    <div className="relative">
+                        <Search className="absolute top-2.5 left-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="text"
+                            placeholder="Search by Note or Opening..."
+                            className="pl-9"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Collapsible Filter Panel */}
+                    {/* Collapsible Filter Panel - FIXED WIDTHS */}
+                    {isFilterOpen && (
+                        <div className="animate-in rounded-lg border bg-card p-4 fade-in slide-in-from-top-2">
+                            <div className="flex flex-wrap items-end gap-4">
+                                {/* 1. Accuracy (Fixed Width & Compact) */}
+                                <div className="flex w-[160px] shrink-0 flex-col gap-1.5">
+                                    <Label className="text-[10px] font-bold tracking-wider uppercase">
+                                        Accuracy (%)
+                                    </Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            placeholder="0"
+                                            value={accuracyMin}
+                                            onChange={(e) =>
+                                                setAccuracyMin(
+                                                    Number(e.target.value),
+                                                )
+                                            }
+                                            className="h-8 w-full [appearance:textfield] text-xs [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                        />
+                                        <span className="text-xs text-muted-foreground">
+                                            -
+                                        </span>
+                                        <Input
+                                            type="number"
+                                            min="0"
+                                            max="100"
+                                            placeholder="100"
+                                            value={accuracyMax}
+                                            onChange={(e) =>
+                                                setAccuracyMax(
+                                                    Number(e.target.value),
+                                                )
+                                            }
+                                            className="h-8 w-full [appearance:textfield] text-xs [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 2. ELO (Fixed Width & Compact - SAME as Accuracy) */}
+                                <div className="flex w-[160px] shrink-0 flex-col gap-1.5">
+                                    <Label className="text-[10px] font-bold tracking-wider uppercase">
+                                        User ELO
+                                    </Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="number"
+                                            placeholder="Min"
+                                            value={eloMin}
+                                            onChange={(e) =>
+                                                setEloMin(
+                                                    e.target.value === ''
+                                                        ? ''
+                                                        : Number(
+                                                              e.target.value,
+                                                          ),
+                                                )
+                                            }
+                                            className="h-8 w-full [appearance:textfield] text-xs [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                        />
+                                        <span className="text-xs text-muted-foreground">
+                                            -
+                                        </span>
+                                        <Input
+                                            type="number"
+                                            placeholder="Max"
+                                            value={eloMax}
+                                            onChange={(e) =>
+                                                setEloMax(
+                                                    e.target.value === ''
+                                                        ? ''
+                                                        : Number(
+                                                              e.target.value,
+                                                          ),
+                                                )
+                                            }
+                                            className="h-8 w-full [appearance:textfield] text-xs [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 3. Created Date (Wide - Takes Remaining Space) */}
+                                <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
+                                    <Label className="text-[10px] font-bold tracking-wider uppercase">
+                                        Created Date
+                                    </Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="date"
+                                            value={createdFrom}
+                                            onChange={(e) =>
+                                                setCreatedFrom(e.target.value)
+                                            }
+                                            className="h-8 flex-1 text-xs"
+                                        />
+                                        <span className="shrink-0 text-xs text-muted-foreground">
+                                            to
+                                        </span>
+                                        <Input
+                                            type="date"
+                                            value={createdTo}
+                                            onChange={(e) =>
+                                                setCreatedTo(e.target.value)
+                                            }
+                                            className="h-8 flex-1 text-xs"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* 4. Last Practiced (Wide - Takes Remaining Space) */}
+                                <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
+                                    <Label className="text-[10px] font-bold tracking-wider uppercase">
+                                        Last Practiced
+                                    </Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input
+                                            type="date"
+                                            value={practicedFrom}
+                                            onChange={(e) =>
+                                                setPracticedFrom(e.target.value)
+                                            }
+                                            className="h-8 flex-1 text-xs"
+                                        />
+                                        <span className="shrink-0 text-xs text-muted-foreground">
+                                            to
+                                        </span>
+                                        <Input
+                                            type="date"
+                                            value={practicedTo}
+                                            onChange={(e) =>
+                                                setPracticedTo(e.target.value)
+                                            }
+                                            className="h-8 flex-1 text-xs"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Reset Button */}
+                                <div className="ml-auto pb-[2px]">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={resetFilters}
+                                        className="h-8 px-3 text-xs text-muted-foreground hover:text-destructive"
+                                    >
+                                        <RotateCcw className="mr-2 h-3 w-3" />{' '}
+                                        Reset
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {error && (
@@ -140,20 +437,30 @@ export default function BlundersList() {
 
                 {!error && (
                     <>
-                        {cards.length === 0 ? (
-                            <div className="relative flex aspect-video items-center justify-center overflow-hidden rounded-xl border border-sidebar-border/70 dark:border-sidebar-border">
-                                <div className="text-center">
-                                    <p className="font-semibold">
-                                        No blunders found
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                        Create one to see it here.
-                                    </p>
+                        {filteredCards.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed p-12 text-center">
+                                <div className="mb-4 rounded-full bg-muted p-4">
+                                    <Search className="h-6 w-6 text-muted-foreground" />
                                 </div>
+                                <h3 className="text-lg font-semibold">
+                                    No blunders match your filters
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                    Try adjusting your search or filters.
+                                </p>
+                                {cards.length > 0 && (
+                                    <Button
+                                        variant="link"
+                                        onClick={resetFilters}
+                                        className="mt-2"
+                                    >
+                                        Clear all filters
+                                    </Button>
+                                )}
                             </div>
                         ) : (
                             <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-3">
-                                {cards.map((card) => {
+                                {filteredCards.map((card) => {
                                     const { isValid, imageUrl } =
                                         getFenImageData(card.fen);
                                     const accuracy = calculateAccuracy(
@@ -161,7 +468,6 @@ export default function BlundersList() {
                                         card.times_wrong,
                                     );
 
-                                    // Determine badge color based on accuracy
                                     let accuracyVariant:
                                         | 'default'
                                         | 'destructive'
@@ -176,7 +482,6 @@ export default function BlundersList() {
                                             key={card.id}
                                             className="relative flex flex-col space-y-3 overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
                                         >
-                                            {/* Created Date (Top Right) */}
                                             <div className="flex justify-end">
                                                 <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
                                                     {formatDate(
@@ -185,12 +490,11 @@ export default function BlundersList() {
                                                 </span>
                                             </div>
 
-                                            {/* Board Container */}
                                             <div className="relative aspect-square w-full overflow-hidden rounded-md border border-muted bg-white">
                                                 {isValid ? (
                                                     <img
                                                         src={imageUrl}
-                                                        alt={`Chess position`}
+                                                        alt="Chess position"
                                                         className="h-full w-full object-cover"
                                                         loading="lazy"
                                                         style={{
@@ -205,7 +509,6 @@ export default function BlundersList() {
                                                 )}
                                             </div>
 
-                                            {/* Correct Move */}
                                             <div className="space-y-1">
                                                 <div>
                                                     <span className="text-[10px] font-bold text-muted-foreground uppercase">
@@ -217,7 +520,6 @@ export default function BlundersList() {
                                                 </div>
                                             </div>
 
-                                            {/* Optional Info Grid (Compact) */}
                                             <div className="grid grid-cols-2 gap-2 text-[11px]">
                                                 <div>
                                                     <span className="block font-bold text-muted-foreground uppercase">
@@ -241,7 +543,7 @@ export default function BlundersList() {
                                                         ELO
                                                     </span>
                                                     <span>
-                                                        {card.user_elo_at_time ||
+                                                        {card.user_elo_at_time ??
                                                             '-'}
                                                     </span>
                                                 </div>
@@ -258,17 +560,13 @@ export default function BlundersList() {
                                                 </div>
                                             </div>
 
-                                            {/* ✅ NEW FOOTER LAYOUT: Accuracy (Left) | Source (Right) */}
                                             <div className="mt-auto flex items-center justify-between border-t border-sidebar-border/50 pt-3">
-                                                {/* Left: Accuracy Percentage */}
                                                 <Badge
                                                     variant={accuracyVariant}
                                                     className="px-2 py-0.5 text-xs font-bold"
                                                 >
                                                     {accuracy}% Accuracy
                                                 </Badge>
-
-                                                {/* Right: Source Game Link (Inline) */}
                                                 {card.source_game_url ? (
                                                     <a
                                                         href={
@@ -287,7 +585,6 @@ export default function BlundersList() {
                                                 )}
                                             </div>
 
-                                            {/* Edit Button (Full Width Bottom) */}
                                             <div className="pt-1">
                                                 <Button
                                                     variant="outline"
