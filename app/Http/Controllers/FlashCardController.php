@@ -171,15 +171,14 @@ class FlashCardController extends Controller
         if ($isCorrect) {
             $flashCard->increment('times_correct');
             $flashCard->priority_score -= 10.0;
+            $flashCard->last_practiced_at = $now;
+
             $user->increment('stats_total_correct');
         } else {
             $flashCard->increment('times_wrong');
             $flashCard->priority_score += 25.0;
             $user->increment('stats_total_wrong');
         }
-
-        // Update card timestamp
-        $flashCard->last_practiced_at = $now;
         $flashCard->save();
 
         // 2. Update User Stats & Streak (Handled entirely by Model)

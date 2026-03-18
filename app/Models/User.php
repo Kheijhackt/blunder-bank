@@ -139,4 +139,53 @@ class User extends Authenticatable
             return 1;
         }
     }
+
+    public function getStreakStatus(): array
+    {
+        $now = Carbon::now('UTC');
+        $today = $now->copy()->startOfDay();
+        $yesterday = $today->copy()->subDay();
+        
+        $lastPracticed = $this->stats_last_practiced_at 
+            ? Carbon::parse($this->stats_last_practiced_at, 'UTC') 
+            : null;
+
+        $currentStreak = $this->stats_current_streak ?? 0;
+        $isActive = false;
+        $isAtRisk = false;
+        $canStartNew = false;
+        $displayStreak = 0;
+
+        if (!$lastPracticed) {
+            // Case: Never practiced
+            $displayStreak = 0;
+            $canStartNew = true; 
+        } else {
+            $lastDate = $lastPracticed->copy()->startOfDay();
+
+            if ($lastDate->eq($today)) {
+                // Case: Practiced Today -> Active
+                $isActive = true;
+                $displayStreak = $currentStreak;
+            } elseif ($lastDate->eq($yesterday)) {
+                // Case: Practiced Yesterday -> At Risk (Streak alive, but needs today)
+                $isAtRisk = true;
+                $displayStreak = $currentStreak;
+            } else {
+                // Case: Last practiced older than yesterday -> Broken
+                // But! If they practice TODAY, they start a NEW streak of 1.
+                $displayStreak = 0;
+                $canStartNew = true;
+            }
+        }
+
+        return [
+            'count' => $displayStreak,
+            'is_active' => $isActive,
+            'is_at_risk' => $isAtRisk,
+            'can_start_new' => $canStartNew,
+            // Helper for frontend icon color
+            'icon_color' => ($isActive || $isAtRisk) ? 'orange' : 'gray', 
+        ];
+    }
 }

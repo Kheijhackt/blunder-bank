@@ -48,6 +48,11 @@ interface DashboardStats {
     streak: number;
     cards_due: number;
     total_cards: number;
+    streak_count: number;
+    streak_is_active: boolean;
+    streak_is_at_risk: boolean;
+    streak_can_start_new: boolean;
+    streak_icon_color: 'orange' | 'gray';
 }
 
 export default function Dashboard() {
@@ -69,6 +74,11 @@ export default function Dashboard() {
                     streak: 5,
                     cards_due: 12,
                     total_cards: 250,
+                    streak_count: 5,
+                    streak_is_active: true,
+                    streak_is_at_risk: false,
+                    streak_can_start_new: true,
+                    streak_icon_color: 'orange',
                 });
             } finally {
                 setLoading(false);
@@ -138,19 +148,28 @@ export default function Dashboard() {
                             <CardTitle className="text-sm font-medium">
                                 Current Streak
                             </CardTitle>
+                            {/* Dynamic Icon Color */}
                             <Flame
-                                className={`h-4 w-4 ${stats.streak > 0 ? 'fill-orange-500 text-orange-500' : 'text-muted-foreground'}`}
+                                className={`h-4 w-4 transition-colors duration-300 ${
+                                    stats.streak_icon_color === 'orange'
+                                        ? 'fill-orange-500 text-orange-500'
+                                        : 'fill-gray-400 text-gray-400' // Gray if broken/inactive
+                                }`}
                             />
                         </CardHeader>
                         <CardContent>
                             <div className="text-2xl font-bold">
-                                {stats.streak}{' '}
-                                {stats.streak === 1 ? 'Day' : 'Days'}
+                                {stats.streak_count}{' '}
+                                {stats.streak_count === 1 ? 'Day' : 'Days'}
                             </div>
                             <p className="text-xs text-muted-foreground">
-                                {stats.streak > 0
-                                    ? 'Keep it up! Practice today.'
-                                    : 'Start a streak today!'}
+                                {stats.streak_is_active
+                                    ? 'Nice! Come back tomorrow.'
+                                    : stats.streak_is_at_risk
+                                      ? 'Practice today to keep it alive!'
+                                      : stats.streak_can_start_new
+                                        ? 'Practice today to start a new streak!'
+                                        : 'Start your journey today!'}
                             </p>
                         </CardContent>
                     </Card>
