@@ -48,6 +48,7 @@ export default function EditCardModal({
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isFenValid, setIsFenValid] = useState(true);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
 
     const { data, setData, processing, errors } = useForm<FlashCardData>({
         fen: '',
@@ -85,6 +86,8 @@ export default function EditCardModal({
         e.preventDefault();
         if (!card || !isFenValid || !data.correct_move.trim()) return;
 
+        setIsSaving(true); // ✅ Start Loading
+
         const formData = new FormData();
         formData.append('fen', data.fen);
         formData.append('correct_move', data.correct_move);
@@ -103,6 +106,8 @@ export default function EditCardModal({
             onSuccess();
         } catch (err) {
             console.error(err);
+        } finally {
+            setIsSaving(false); // ✅ Stop Loading
         }
     };
 
@@ -283,14 +288,14 @@ export default function EditCardModal({
                         <Button
                             type="submit"
                             disabled={
-                                processing ||
+                                isSaving || // ✅ Changed from processing
                                 isDeleting ||
                                 !isFenValid ||
                                 !data.correct_move.trim()
                             }
                             className="w-full"
                         >
-                            {processing ? (
+                            {isSaving ? ( // ✅ Changed from processing
                                 'Saving...'
                             ) : (
                                 <>
