@@ -11,6 +11,8 @@ Route::inertia('/', 'welcome', [
 Route::middleware(['auth', 'verified'])->group(function () {
     // For Views
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::inertia('blunders-list','blundersList')->name('blundersList');
+
     Route::inertia('add-flashcard','addFlashCard')->name('addFlashCard');
     Route::inertia('edit-flashcard','editFlashCard')->name('editFlashCard');
     Route::inertia('show-attempt','showAttempt')->name('showAttempt');
