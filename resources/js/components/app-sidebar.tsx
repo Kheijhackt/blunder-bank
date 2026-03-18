@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     BookOpen,
+    BrainCircuit,
     FolderGit2,
     Goal,
     LayoutGrid,
@@ -39,9 +40,9 @@ const mainNavItems: NavItem[] = [
         icon: LibraryBig,
     },
     {
-        title: 'Practice',
+        title: 'Smart Practice',
         href: practiceFlashCards(),
-        icon: Goal,
+        icon: BrainCircuit,
     },
     {
         title: 'Focused Practice',
