@@ -1,6 +1,6 @@
 import { Head } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
-import { practiceFlashCards } from '@/routes';
+import { blundersList, practiceFlashCards } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
 import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
@@ -22,6 +22,7 @@ import {
     ArrowRight,
     Loader2,
     AlertCircle,
+    Trophy,
 } from 'lucide-react';
 
 interface FlashCard {
@@ -44,6 +45,9 @@ export default function PracticeFlashcards() {
     const [card, setCard] = useState<FlashCard | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [hasStarted, setHasStarted] = useState(false);
+    const [sessionCount, setSessionCount] = useState(0); // Tracks cards answered
+    const [sessionEnded, setSessionEnded] = useState(false); // Tracks if user clicked "End"
 
     // Interaction State
     const [userAnswer, setUserAnswer] = useState('');
@@ -84,9 +88,33 @@ export default function PracticeFlashcards() {
         }
     };
 
-    useEffect(() => {
+    const handleStartSession = () => {
+        setHasStarted(true);
+    };
+
+    const handleEndSession = () => {
+        setSessionEnded(true);
+    };
+
+    const handleRestartSession = () => {
+        setSessionEnded(false);
+        setSessionCount(0);
+        setHasStarted(true); // Keep them in practice mode, just reset count
         fetchNextCard();
-    }, []);
+    };
+
+    const handleExitToLibrary = () => {
+        // navigate to blundersList() route using inertia
+        const url = blundersList().url;
+        window.location.href = url;
+    };
+
+    // Only fetch when the user actually clicks "Start Practice"
+    useEffect(() => {
+        if (hasStarted) {
+            fetchNextCard();
+        }
+    }, [hasStarted]);
 
     // Focus input when card loads or feedback changes
     useEffect(() => {
@@ -120,6 +148,7 @@ export default function PracticeFlashcards() {
                     message: 'Correct! Moving to next card...',
                 });
                 setUserAnswer('');
+                setSessionCount((prev) => prev + 1); // <--- Add this line
 
                 // Wait 1s then fetch next
                 setTimeout(() => {
@@ -145,7 +174,140 @@ export default function PracticeFlashcards() {
         }
     };
 
-    // handleSkip removed
+    // --- INTRO SCREEN (Shown before starting) ---
+    if (!hasStarted) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="Practice Mode" />
+                <div className="flex h-full items-center justify-center p-6">
+                    <Card className="w-full max-w-2xl overflow-hidden shadow-xl">
+                        <CardContent className="p-0">
+                            <div className="grid md:grid-cols-2">
+                                {/* Left: Visual/Icon */}
+                                <div className="flex flex-col items-center justify-center bg-muted/50 p-8 text-center">
+                                    <div className="mb-4 p-4">
+                                        <Lightbulb className="h-10 w-10 text-primary" />
+                                    </div>
+                                    <h3 className="text-lg font-bold">
+                                        Smart Review
+                                    </h3>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        Powered by spaced repetition algorithms.
+                                    </p>
+                                </div>
+
+                                {/* Right: Content & Button */}
+                                <div className="flex flex-col justify-center space-y-4 p-8">
+                                    <div>
+                                        <h2 className="text-2xl font-bold tracking-tight">
+                                            Practice Mode
+                                        </h2>
+                                        <p className="mt-2 leading-relaxed text-muted-foreground">
+                                            Not sure what to study? This mode
+                                            automatically selects your next
+                                            blunder based on:
+                                        </p>
+                                        <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+                                            <li className="flex items-start gap-2">
+                                                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                                                <span>
+                                                    <strong>Recency:</strong>{' '}
+                                                    Prioritizes cards you
+                                                    haven't seen in a while.
+                                                </span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                                                <span>
+                                                    <strong>
+                                                        Performance:
+                                                    </strong>{' '}
+                                                    Resurfaces blunders you
+                                                    frequently get wrong.
+                                                </span>
+                                            </li>
+                                            <li className="flex items-start gap-2">
+                                                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                                                <span>
+                                                    <strong>
+                                                        Long-term Retention:
+                                                    </strong>{' '}
+                                                    Optimized intervals to move
+                                                    knowledge to long-term
+                                                    memory.
+                                                </span>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <Button
+                                        size="lg"
+                                        onClick={handleStartSession}
+                                        className="mt-4 w-full gap-2"
+                                    >
+                                        <ArrowRight className="h-4 w-4" />
+                                        Start Practice Session
+                                    </Button>
+                                    <p className="text-center text-xs text-muted-foreground">
+                                        Unlimited session • You control the pace
+                                    </p>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            </AppLayout>
+        );
+    }
+
+    // --- SESSION SUMMARY (Shown when ended) ---
+    if (sessionEnded) {
+        return (
+            <AppLayout breadcrumbs={breadcrumbs}>
+                <Head title="Session Complete" />
+                <div className="flex h-full items-center justify-center">
+                    <Card className="w-full max-w-md space-y-6 p-8 text-center">
+                        <div className="mx-auto rounded-full bg-primary/10 p-4">
+                            <Trophy className="h-12 w-12 text-primary" />
+                        </div>
+                        <div>
+                            <h2 className="text-2xl font-bold">
+                                Session Ended
+                            </h2>
+                            <p className="mt-2 text-muted-foreground">
+                                Great work! You reviewed:
+                            </p>
+                            <div className="mt-4 text-4xl font-bold text-primary">
+                                {sessionCount}
+                            </div>
+                            <p className="mt-1 text-sm text-muted-foreground">
+                                {sessionCount === 0
+                                    ? 'cards'
+                                    : sessionCount === 1
+                                      ? 'card'
+                                      : 'cards'}
+                            </p>
+                        </div>
+                        <div className="flex flex-col gap-3 pt-4">
+                            <Button
+                                onClick={handleRestartSession}
+                                className="w-full"
+                            >
+                                Start New Session
+                            </Button>
+                            <Button
+                                variant="outline"
+                                onClick={handleExitToLibrary}
+                                className="w-full"
+                            >
+                                Back to Library
+                            </Button>
+                        </div>
+                    </Card>
+                </div>
+            </AppLayout>
+        );
+    }
 
     if (loading && !card) {
         return (
@@ -209,11 +371,18 @@ export default function PracticeFlashcards() {
                             Find the best move for{' '}
                             <span className="font-semibold text-primary">
                                 {turn}
-                            </span>
-                            .
+                            </span>{' '}
+                            • Session: {sessionCount} cards
                         </p>
                     </div>
-                    {/* Skip Button Removed */}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleEndSession}
+                        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    >
+                        End Session
+                    </Button>
                 </div>
 
                 {/* Main Card Area */}
