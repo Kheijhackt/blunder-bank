@@ -4,6 +4,7 @@ import {
     BrainCircuit,
     FolderGit2,
     Goal,
+    Info,
     LayoutGrid,
     LibraryBig,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ import {
     blundersList,
     dashboard,
     focusedPracticeFlashCards,
+    guide,
     practiceFlashCards,
 } from '@/routes';
 import type { NavItem } from '@/types';
@@ -48,6 +50,11 @@ const mainNavItems: NavItem[] = [
         title: 'Focused Practice',
         href: focusedPracticeFlashCards(),
         icon: Goal,
+    },
+    {
+        title: 'User Guide',
+        href: guide(),
+        icon: Info,
     },
 ];
 
