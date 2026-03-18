@@ -170,10 +170,10 @@ class FlashCardController extends Controller
         if ($isCorrect) {
             $flashCard->increment('times_correct');
             $flashCard->last_practiced_at = Carbon::now();
-            $flashCard->priority_score -= 0.01;
+            $flashCard->priority_score -= 10.0;
         } else {
             $flashCard->increment('times_wrong');
-            $flashCard->priority_score += 0.05;
+            $flashCard->priority_score += 25.0;
         }
         $flashCard->save();
 
@@ -184,58 +184,97 @@ class FlashCardController extends Controller
 
     // Algorithm for which card to practice next
     public function getNextCard() {
-        $user = Auth::user();
+    $user = Auth::user();
+    $now = Carbon::now();
 
-        // 1. Fetch top 20 candidates efficiently using SQLite-friendly ordering
-        // Order: NULLs first (new cards), then highest static score.
-        $candidates = $user->flashCards()
-            ->orderByRaw('last_practiced_at IS NULL DESC') // TRUE (1) comes after FALSE (0)? Wait. 
-            // Correction: In SQLite, IS NULL returns 1 for true. We want NULLs FIRST.
-            // So we order by 'last_practiced_at IS NOT NULL' ASC (0 comes before 1).
-            ->orderByRaw('last_practiced_at IS NOT NULL ASC') 
-            ->orderByDesc('priority_score')
-            ->limit(20)
-            ->get();
+    // Configuration Constants (Only used for practiced cards)
+    $timeDecayRate = 0.05;     // Points gained per minute
+    $halfLife = 45;            // Minutes until penalty is cut in half
+    $maxPenaltyDepth = 0.95;   // At 0 mins, multiplier = 0.05
 
-        if ($candidates->isEmpty()) {
-            return response()->json([
-                'message' => 'No flashcards available.',
-                'flash_card' => null
-            ], 404);
-        }
+    // STEP 1: Check for New Cards (last_practiced_at IS NULL)
+    // Logic: Simply return the oldest created card. No scoring math needed.
+    $newCard = $user->flashCards()
+        ->whereNull('last_practiced_at')
+        ->orderBy('created_at', 'asc') // Oldest first
+        ->first();
 
-        $now = Carbon::now();
-        $bestCard = null;
-        $highestDynamicScore = -999999;
-
-        foreach ($candidates as $card) {
-            $dynamicScore = $card->priority_score;
-
-            if ($card->last_practiced_at === null) {
-                // New Card Bonus
-                $dynamicScore += 50.0;
-                // Tiny random nudge to shuffle new cards
-                $dynamicScore += (mt_rand() / mt_getrandmax()) * 0.001; 
-            } else {
-                // Calculate minutes (Carbon works perfectly with SQLite timestamps)
-                $minutesSince = $now->diffInMinutes($card->last_practiced_at, false);
-                $minutesSince = max(0, $minutesSince);
-                
-                // Time Decay
-                $dynamicScore += ($minutesSince * 0.01);
-            }
-
-            if ($dynamicScore > $highestDynamicScore) {
-                $highestDynamicScore = $dynamicScore;
-                $bestCard = $card;
-            }
-        }
-
+    if ($newCard) {
+        // Found a new card. Return immediately.
         return response()->json([
-            'flash_card' => $bestCard,
-            'debug_dynamic_score' => round($highestDynamicScore, 4),
-            'debug_static_score' => $bestCard->priority_score,
-            'is_new_card' => ($bestCard->last_practiced_at === null)
+            'flash_card' => $newCard,
+            'debug_dynamic_score' => null, // Not applicable for new cards
+            'debug_static_score' => $newCard->priority_score,
+            'debug_multiplier' => null,    // Not applicable
+            'is_new_card' => true
         ]);
     }
+
+    // STEP 2: No New Cards. Handle Practiced Cards.
+    // Fetch top 30 candidates based on STATIC priority_score DESC
+    $candidates = $user->flashCards()
+        ->whereNotNull('last_practiced_at')
+        ->orderByDesc('priority_score')
+        ->limit(30)
+        ->get();
+
+    if ($candidates->isEmpty()) {
+        return response()->json([
+            'message' => 'No flashcards available.',
+            'flash_card' => null
+        ], 404);
+    }
+
+    $bestCard = null;
+    $highestDynamicScore = -999999;
+
+    foreach ($candidates as $card) {
+        $currentScore = $card->priority_score;
+        
+        // Calculate Time Since Practice
+        $minutesSince = $now->diffInMinutes($card->last_practiced_at, false);
+        $minutesSince = max(0, $minutesSince);
+
+        // Calculate Multiplier (Exponential Decay Recovery)
+        // Formula: 1 - (maxPenalty * e^(-minutes / halfLife))
+        $multiplier = 1 - ($maxPenaltyDepth * exp(-$minutesSince / $halfLife));
+        
+        // Clamp multiplier between 0.05 and 1.0
+        $multiplier = min(1.0, max(0.05, $multiplier));
+
+        // Apply Multiplier to Base Score
+        $dynamicScore = $currentScore * $multiplier;
+
+        // Add Time Decay Bonus (helps cards recover as time passes)
+        $dynamicScore += ($minutesSince * $timeDecayRate);
+
+        if ($dynamicScore > $highestDynamicScore) {
+            $highestDynamicScore = $dynamicScore;
+            $bestCard = $card;
+        }
+    }
+
+    if (!$bestCard) {
+        return response()->json([
+            'message' => 'No flashcards available.',
+            'flash_card' => null
+        ], 404);
+    }
+
+    // Calculate debug multiplier for the response
+    $debugMultiplier = 1.0;
+    if ($bestCard->last_practiced_at) {
+        $mins = $now->diffInMinutes($bestCard->last_practiced_at, false);
+        $debugMultiplier = 1 - ($maxPenaltyDepth * exp(-max(0, $mins) / $halfLife));
+        $debugMultiplier = min(1.0, max(0.05, $debugMultiplier));
+    }
+
+    return response()->json([
+        'flash_card' => $bestCard,
+        'debug_dynamic_score' => round($highestDynamicScore, 4),
+        'debug_static_score' => $bestCard->priority_score,
+        'debug_multiplier' => round($debugMultiplier, 4),
+        'is_new_card' => false
+    ]);
+}
 }
