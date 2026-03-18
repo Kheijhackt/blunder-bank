@@ -31,49 +31,38 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-// ✅ 1. STRICT VALIDATION FUNCTION
-// Returns true only if FEN looks structurally valid to avoid unnecessary API calls
+// Validation Function
 const validateFEN = (fen: string): boolean => {
     if (!fen || typeof fen !== 'string') return false;
-
     const parts = fen.trim().split(/\s+/);
-
-    // Must have at least 2 parts: Board position and Active Color
     if (parts.length < 2) return false;
-
     const board = parts[0];
     const activeColor = parts[1];
-
-    // Basic Board Validation:
-    // - Must contain ranks separated by '/'
-    // - Must only contain valid characters (p,P,r,R,n,N,b,B,q,Q,k,K,1-8)
     const boardRegex = /^[prnbqkPRNBQK1-8\/]+$/;
     if (!boardRegex.test(board)) return false;
-
-    // Basic Turn Validation:
-    // - Must be 'w' or 'b'
     if (activeColor !== 'w' && activeColor !== 'b') return false;
-
     return true;
 };
 
-// Helper to get POV and Image URL only if valid
+// Helper for Image Data
 const getFenImageData = (fen: string) => {
     if (!validateFEN(fen)) {
         return { isValid: false, turn: 'white', imageUrl: '' };
     }
-
     const parts = fen.trim().split(/\s+/);
     const turnChar = parts[1].toLowerCase();
     const pov = turnChar === 'b' ? 'black' : 'white';
-
-    // Encode FEN for URL
     const cleanFen = parts.join(' ');
     const encodedFen = encodeURIComponent(cleanFen);
-
     const imageUrl = `https://fen2image.chessvision.ai/${encodedFen}?pov=${pov}`;
-
     return { isValid: true, turn: pov, imageUrl };
+};
+
+// Helper for Accuracy Percentage
+const calculateAccuracy = (correct: number, wrong: number) => {
+    const total = correct + wrong;
+    if (total === 0) return 0;
+    return Math.round((correct / total) * 100);
 };
 
 export default function BlundersList() {
@@ -165,52 +154,53 @@ export default function BlundersList() {
                         ) : (
                             <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-3">
                                 {cards.map((card) => {
-                                    const { isValid, turn, imageUrl } =
+                                    const { isValid, imageUrl } =
                                         getFenImageData(card.fen);
+                                    const accuracy = calculateAccuracy(
+                                        card.times_correct,
+                                        card.times_wrong,
+                                    );
+
+                                    // Determine badge color based on accuracy
+                                    let accuracyVariant:
+                                        | 'default'
+                                        | 'destructive'
+                                        | 'secondary' = 'default';
+                                    if (accuracy < 50)
+                                        accuracyVariant = 'destructive';
+                                    else if (accuracy < 80)
+                                        accuracyVariant = 'secondary';
 
                                     return (
                                         <div
                                             key={card.id}
                                             className="relative flex flex-col space-y-3 overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
                                         >
-                                            {/* ID & Created Date */}
-                                            <div className="flex items-start justify-between">
-                                                <Badge variant="outline">
-                                                    ID: {card.id}
-                                                </Badge>
-                                                <span className="text-xs text-muted-foreground">
+                                            {/* Created Date (Top Right) */}
+                                            <div className="flex justify-end">
+                                                <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
                                                     {formatDate(
                                                         card.created_at,
                                                     )}
                                                 </span>
                                             </div>
 
-                                            {/* ✅ BOARD / INVALID CONTAINER */}
+                                            {/* Board Container */}
                                             <div className="relative aspect-square w-full overflow-hidden rounded-md border border-muted bg-white">
                                                 {isValid ? (
                                                     <img
                                                         src={imageUrl}
-                                                        alt={`Chess position: ${card.fen}`}
+                                                        alt={`Chess position`}
                                                         className="h-full w-full object-cover"
-                                                        // ✅ 3. LAZY LOADING: Only fetches when scrolled into view
                                                         loading="lazy"
-                                                        // ✅ 1. CROPPING: Aligns image to top to hide bottom watermark
                                                         style={{
                                                             objectPosition:
                                                                 'top',
                                                         }}
                                                     />
                                                 ) : (
-                                                    // ✅ 2. INVALID STATE: Simple text, no API request
                                                     <div className="flex h-full w-full items-center justify-center bg-slate-50 text-sm font-medium text-slate-500">
                                                         Invalid FEN
-                                                    </div>
-                                                )}
-
-                                                {/* Turn Indicator (Only if valid) */}
-                                                {isValid && (
-                                                    <div className="absolute bottom-2 left-2 rounded bg-black/70 px-2 py-1 text-[10px] font-bold text-white uppercase backdrop-blur-sm">
-                                                        {turn} to move
                                                     </div>
                                                 )}
                                             </div>
@@ -218,17 +208,17 @@ export default function BlundersList() {
                                             {/* Correct Move */}
                                             <div className="space-y-1">
                                                 <div>
-                                                    <span className="text-xs font-bold text-muted-foreground uppercase">
+                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase">
                                                         Correct Move
                                                     </span>
-                                                    <p className="text-sm font-semibold">
+                                                    <p className="text-sm leading-tight font-semibold">
                                                         {card.correct_move}
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            {/* Optional Info Grid */}
-                                            <div className="grid grid-cols-2 gap-2 text-xs">
+                                            {/* Optional Info Grid (Compact) */}
+                                            <div className="grid grid-cols-2 gap-2 text-[11px]">
                                                 <div>
                                                     <span className="block font-bold text-muted-foreground uppercase">
                                                         Note
@@ -268,37 +258,41 @@ export default function BlundersList() {
                                                 </div>
                                             </div>
 
-                                            {/* Stats */}
-                                            <div className="flex items-center gap-2 border-t border-sidebar-border/50 pt-2">
+                                            {/* ✅ NEW FOOTER LAYOUT: Accuracy (Left) | Source (Right) */}
+                                            <div className="mt-auto flex items-center justify-between border-t border-sidebar-border/50 pt-3">
+                                                {/* Left: Accuracy Percentage */}
                                                 <Badge
-                                                    variant="default"
-                                                    className="bg-green-600"
+                                                    variant={accuracyVariant}
+                                                    className="px-2 py-0.5 text-xs font-bold"
                                                 >
-                                                    ✓ {card.times_correct}
+                                                    {accuracy}% Accuracy
                                                 </Badge>
-                                                <Badge variant="destructive">
-                                                    ✗ {card.times_wrong}
-                                                </Badge>
+
+                                                {/* Right: Source Game Link (Inline) */}
+                                                {card.source_game_url ? (
+                                                    <a
+                                                        href={
+                                                            card.source_game_url
+                                                        }
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80 hover:underline"
+                                                    >
+                                                        <span>🔗 Source</span>
+                                                    </a>
+                                                ) : (
+                                                    <span className="text-xs text-muted-foreground italic">
+                                                        No source
+                                                    </span>
+                                                )}
                                             </div>
 
-                                            {/* Source Link */}
-                                            {card.source_game_url && (
-                                                <a
-                                                    href={card.source_game_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="mt-1 block truncate text-xs text-primary hover:underline"
-                                                >
-                                                    🔗 Source Game
-                                                </a>
-                                            )}
-
-                                            {/* Edit Button */}
-                                            <div className="mt-auto pt-2">
+                                            {/* Edit Button (Full Width Bottom) */}
+                                            <div className="pt-1">
                                                 <Button
                                                     variant="outline"
                                                     size="sm"
-                                                    className="w-full text-xs"
+                                                    className="h-8 w-full text-xs"
                                                     onClick={() =>
                                                         console.log(
                                                             'Edit card',
