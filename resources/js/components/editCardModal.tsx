@@ -261,13 +261,14 @@ export default function EditCardModal({
                     </div>
 
                     {/* 5. BUTTONS (Footer) */}
-                    <DialogFooter className="mt-6 flex items-center justify-between gap-2 border-t pt-4 pt-6 sm:justify-between">
+                    <DialogFooter className="mt-6 grid grid-cols-2 gap-4 border-t pt-6">
+                        {/* Left Column: Delete Button */}
                         <Button
                             type="button"
                             variant="destructive"
                             onClick={handleDelete}
                             disabled={processing || isDeleting}
-                            className="order-2 sm:order-1"
+                            className="w-full"
                         >
                             {isDeleting ? (
                                 'Deleting...'
@@ -278,34 +279,25 @@ export default function EditCardModal({
                             )}
                         </Button>
 
-                        <div className="order-1 flex gap-2 sm:order-2">
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => onOpenChange(false)}
-                                disabled={processing || isDeleting}
-                            >
-                                Cancel
-                            </Button>
-                            <Button
-                                type="submit"
-                                disabled={
-                                    processing ||
-                                    isDeleting ||
-                                    !isFenValid ||
-                                    !data.correct_move.trim()
-                                }
-                            >
-                                {processing ? (
-                                    'Saving...'
-                                ) : (
-                                    <>
-                                        <Save className="mr-2 h-4 w-4" /> Save
-                                        Changes
-                                    </>
-                                )}
-                            </Button>
-                        </div>
+                        {/* Right Column: Save Button (No Wrapper Div) */}
+                        <Button
+                            type="submit"
+                            disabled={
+                                processing ||
+                                isDeleting ||
+                                !isFenValid ||
+                                !data.correct_move.trim()
+                            }
+                            className="w-full"
+                        >
+                            {processing ? (
+                                'Saving...'
+                            ) : (
+                                <>
+                                    <Save className="mr-2 h-4 w-4" /> Save
+                                </>
+                            )}
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
