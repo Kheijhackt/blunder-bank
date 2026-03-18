@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FlashCardController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 
@@ -25,6 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ==========================================
     Route::post('api/flashcards', [FlashCardController::class, 'store'])->name('flashcards.store');
     Route::get('api/flashcards', [FlashCardController::class, 'index'])->name('flashcards.index');
+    Route::get('api/dashboard/stats', [UserController::class, 'stats'])->name('dashboard.stats');
 
     // ⚠️ CRITICAL: Specific static routes MUST come before dynamic {id} routes
     Route::get('api/flashcards/next-card', [FlashCardController::class, 'getNextCard'])->name('flashcards.getNextCard');
