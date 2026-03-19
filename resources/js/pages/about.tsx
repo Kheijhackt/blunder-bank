@@ -1,10 +1,10 @@
 import { Head } from '@inertiajs/react';
-import { Card, CardContent } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import AppLayout from '@/layouts/app-layout';
-import { BreadcrumbItem } from '@/types';
-import { about } from '@/routes';
 import { Music, Rabbit, Sparkles, Wind } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
+import { about } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
 
 // --- Reusable Component (Simplified for this specific layout) ---
 interface PersonCardProps {

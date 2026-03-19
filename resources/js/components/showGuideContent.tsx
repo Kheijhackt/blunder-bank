@@ -1,16 +1,3 @@
-import { dashboard } from '@/routes';
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-
-// Icons
 import {
     BrainCircuit,
     BookOpen,
@@ -21,11 +8,14 @@ import {
     Link as LinkIcon,
     XCircle,
     CheckCircle2,
-    ArrowRight,
     Search,
     Database,
     Eye,
 } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+
+// Icons
 
 export default function ShowGuideContent() {
     return (

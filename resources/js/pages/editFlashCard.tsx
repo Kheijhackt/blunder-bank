@@ -1,5 +1,7 @@
-import { useState, FormEvent, useEffect } from 'react';
-import axios, { AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
+import axios from 'axios';
+import type { FormEvent} from 'react';
+import { useState, useEffect } from 'react';
 
 interface FlashCard {
     id: number;
@@ -56,6 +58,7 @@ export default function EditFlashCard({ id }: { id: number }) {
 
     const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+
         try {
             await axios.patch(`/api/flashcards/${id}`, {
                 fen: fen.trim(),
@@ -103,7 +106,9 @@ export default function EditFlashCard({ id }: { id: number }) {
         }
     };
 
-    if (loading) return <div>Loading...</div>;
+    if (loading) {
+return <div>Loading...</div>;
+}
 
     return (
         <div style={{ maxWidth: '600px', margin: '0 auto', padding: '20px' }}>

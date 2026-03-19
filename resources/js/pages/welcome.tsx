@@ -1,5 +1,4 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { dashboard, login, register, guide, blundersList } from '@/routes';
 import {
     BrainCircuit,
     Target,
@@ -10,6 +9,7 @@ import {
     PenTool,
 } from 'lucide-react';
 import ShowGuideContent from '@/components/showGuideContent';
+import { dashboard, login, register, blundersList } from '@/routes';
 
 export default function Welcome({
     canRegister = true,

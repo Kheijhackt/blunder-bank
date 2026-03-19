@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
-import { validateFEN, getFenImageData } from '@/utils/chess';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import axios from 'axios';
+import { Save, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -12,8 +11,9 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
-import { Save, AlertCircle, X } from 'lucide-react';
-import axios from 'axios';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { getFenImageData } from '@/utils/chess';
 
 interface FlashCardData {
     fen: string;
@@ -39,16 +39,14 @@ export default function NewCardModal({
     const [isFenValid, setIsFenValid] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
 
-    const { data, setData, reset, processing, errors } = useForm<FlashCardData>(
-        {
-            fen: '',
-            correct_move: '',
-            note: '',
-            user_elo_at_time: '',
-            opening_name: '',
-            source_game_url: '',
-        },
-    );
+    const { data, setData, processing } = useForm<FlashCardData>({
+        fen: '',
+        correct_move: '',
+        note: '',
+        user_elo_at_time: '',
+        opening_name: '',
+        source_game_url: '',
+    });
 
     // Reset form when modal opens
     // Reset form when modal opens
@@ -66,11 +64,14 @@ export default function NewCardModal({
             setIsFenValid(false);
             setImageUrl(null);
         }
-    }, [open]);
+    }, [open, setData]);
 
     // Validate FEN & Update Image
     useEffect(() => {
-        if (!open) return;
+        if (!open) {
+            return;
+        }
+
         const result = getFenImageData(data.fen);
         setIsFenValid(result.isValid);
         setImageUrl(result.isValid ? result.imageUrl : null);
@@ -78,19 +79,31 @@ export default function NewCardModal({
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!isFenValid || !data.correct_move.trim()) return;
+
+        if (!isFenValid || !data.correct_move.trim()) {
+            return;
+        }
 
         setIsCreating(true);
         const formData = new FormData();
         formData.append('fen', data.fen);
         formData.append('correct_move', data.correct_move);
-        if (data.note) formData.append('note', data.note);
-        if (data.user_elo_at_time)
+
+        if (data.note) {
+            formData.append('note', data.note);
+        }
+
+        if (data.user_elo_at_time) {
             formData.append('user_elo_at_time', String(data.user_elo_at_time));
-        if (data.opening_name)
+        }
+
+        if (data.opening_name) {
             formData.append('opening_name', data.opening_name);
-        if (data.source_game_url)
+        }
+
+        if (data.source_game_url) {
             formData.append('source_game_url', data.source_game_url);
+        }
 
         try {
             // POST Request to create new card

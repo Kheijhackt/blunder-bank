@@ -1,21 +1,21 @@
 import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { blundersList } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { useEffect, useState, useMemo } from 'react';
 import axios from 'axios';
+import { Filter, RotateCcw, Search } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
 
 // Shadcn Components
-import { Button } from '@/components/ui/button';
+import EditCardModal from '@/components/editCardModal';
+import NewCardModal from '@/components/newCardModal';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Filter, RotateCcw, Search } from 'lucide-react';
+import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 
 // ✅ Import BOTH Modals
-import EditCardModal from '@/components/editCardModal';
-import NewCardModal from '@/components/newCardModal';
+import { blundersList } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
 
 // Utils
 import { getFenImageData } from '@/utils/chess';
@@ -41,12 +41,19 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 const calculateAccuracy = (correct: number, wrong: number) => {
     const total = correct + wrong;
-    if (total === 0) return 0;
+
+    if (total === 0) {
+return 0;
+}
+
     return Math.round((correct / total) * 100);
 };
 
 const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'Never';
+    if (!dateString) {
+return 'Never';
+}
+
     return new Date(dateString).toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'short',
@@ -55,7 +62,10 @@ const formatDate = (dateString: string | null) => {
 };
 
 const parseDate = (dateString: string | null) => {
-    if (!dateString) return null;
+    if (!dateString) {
+return null;
+}
+
     return new Date(dateString);
 };
 
@@ -109,41 +119,75 @@ export default function BlundersList() {
                 const openingMatch = card.opening_name
                     ?.toLowerCase()
                     .includes(query);
-                if (!noteMatch && !openingMatch) return false;
+
+                if (!noteMatch && !openingMatch) {
+return false;
+}
             }
+
             const accuracy = calculateAccuracy(
                 card.times_correct,
                 card.times_wrong,
             );
-            if (accuracy < accuracyMin || accuracy > accuracyMax) return false;
+
+            if (accuracy < accuracyMin || accuracy > accuracyMax) {
+return false;
+}
+
             const elo = card.user_elo_at_time;
+
             if (elo !== null && elo !== undefined) {
-                if (eloMin !== '' && elo < eloMin) return false;
-                if (eloMax !== '' && elo > eloMax) return false;
+                if (eloMin !== '' && elo < eloMin) {
+return false;
+}
+
+                if (eloMax !== '' && elo > eloMax) {
+return false;
+}
             } else {
-                if (eloMin !== '' || eloMax !== '') return false;
+                if (eloMin !== '' || eloMax !== '') {
+return false;
+}
             }
+
             const createdAt = parseDate(card.created_at);
+
             if (createdAt) {
-                if (createdFrom && createdAt < new Date(createdFrom))
-                    return false;
+                if (createdFrom && createdAt < new Date(createdFrom)) {
+return false;
+}
+
                 if (createdTo) {
                     const toDate = new Date(createdTo);
                     toDate.setHours(23, 59, 59, 999);
-                    if (createdAt > toDate) return false;
+
+                    if (createdAt > toDate) {
+return false;
+}
                 }
             }
+
             const practicedAt = parseDate(card.last_practiced_at ?? null);
+
             if (practicedFrom || practicedTo) {
-                if (!practicedAt) return false;
-                if (practicedFrom && practicedAt < new Date(practicedFrom))
-                    return false;
+                if (!practicedAt) {
+return false;
+}
+
+                if (practicedFrom && practicedAt < new Date(practicedFrom)) {
+return false;
+}
+
                 if (practicedTo) {
                     const toDate = new Date(practicedTo);
                     toDate.setHours(23, 59, 59, 999);
-                    if (practicedAt > toDate) return false;
+
+                    if (practicedAt > toDate) {
+return false;
+}
                 }
             }
+
             return true;
         });
     }, [
@@ -448,10 +492,12 @@ export default function BlundersList() {
                                         | 'default'
                                         | 'destructive'
                                         | 'secondary' = 'default';
-                                    if (accuracy < 50)
-                                        accuracyVariant = 'destructive';
-                                    else if (accuracy < 80)
-                                        accuracyVariant = 'secondary';
+
+                                    if (accuracy < 50) {
+accuracyVariant = 'destructive';
+} else if (accuracy < 80) {
+accuracyVariant = 'secondary';
+}
 
                                     return (
                                         <div

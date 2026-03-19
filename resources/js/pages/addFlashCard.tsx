@@ -1,5 +1,7 @@
-import { useState, FormEvent } from 'react';
-import axios, { AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
+import axios from 'axios';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 
 interface FlashCard {
     id: number;

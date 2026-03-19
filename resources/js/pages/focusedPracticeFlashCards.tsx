@@ -1,21 +1,5 @@
 import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { focusedPracticeFlashCards } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { useEffect, useState, useRef, useMemo } from 'react';
 import axios from 'axios';
-
-// Shadcn Components
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { cn } from '@/lib/utils';
-
-// Utils & Icons
-import { getFenImageData } from '@/utils/chess';
 import {
     CheckCircle2,
     XCircle,
@@ -27,10 +11,24 @@ import {
     RotateCcw,
     Search,
     Play,
-    ChevronLeft,
-    ChevronRight,
     Trophy,
 } from 'lucide-react';
+import { useEffect, useState, useRef, useMemo } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import AppLayout from '@/layouts/app-layout';
+import { cn } from '@/lib/utils';
+import { focusedPracticeFlashCards } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
+
+// Shadcn Components
+
+// Utils & Icons
+import { getFenImageData } from '@/utils/chess';
 
 interface FlashCard {
     id: number;
@@ -52,12 +50,19 @@ const breadcrumbs: BreadcrumbItem[] = [
 // --- Filter Logic Helpers (Copied from BlundersList) ---
 const calculateAccuracy = (correct: number, wrong: number) => {
     const total = correct + wrong;
-    if (total === 0) return 0;
+
+    if (total === 0) {
+        return 0;
+    }
+
     return Math.round((correct / total) * 100);
 };
 
 const parseDate = (dateString: string | null) => {
-    if (!dateString) return null;
+    if (!dateString) {
+        return null;
+    }
+
     return new Date(dateString);
 };
 
@@ -122,41 +127,75 @@ export default function FocusedPracticeFlashcards() {
                 const openingMatch = card.opening_name
                     ?.toLowerCase()
                     .includes(query);
-                if (!noteMatch && !openingMatch) return false;
+
+                if (!noteMatch && !openingMatch) {
+                    return false;
+                }
             }
+
             const accuracy = calculateAccuracy(
                 card.times_correct,
                 card.times_wrong,
             );
-            if (accuracy < accuracyMin || accuracy > accuracyMax) return false;
-            const elo = card.user_elo_at_time;
-            if (elo !== null && elo !== undefined) {
-                if (eloMin !== '' && elo < eloMin) return false;
-                if (eloMax !== '' && elo > eloMax) return false;
-            } else {
-                if (eloMin !== '' || eloMax !== '') return false;
+
+            if (accuracy < accuracyMin || accuracy > accuracyMax) {
+                return false;
             }
-            const createdAt = parseDate(card.created_at);
-            if (createdAt) {
-                if (createdFrom && createdAt < new Date(createdFrom))
+
+            const elo = card.user_elo_at_time;
+
+            if (elo !== null && elo !== undefined) {
+                if (eloMin !== '' && elo < eloMin) {
                     return false;
+                }
+
+                if (eloMax !== '' && elo > eloMax) {
+                    return false;
+                }
+            } else {
+                if (eloMin !== '' || eloMax !== '') {
+                    return false;
+                }
+            }
+
+            const createdAt = parseDate(card.created_at);
+
+            if (createdAt) {
+                if (createdFrom && createdAt < new Date(createdFrom)) {
+                    return false;
+                }
+
                 if (createdTo) {
                     const toDate = new Date(createdTo);
                     toDate.setHours(23, 59, 59, 999);
-                    if (createdAt > toDate) return false;
+
+                    if (createdAt > toDate) {
+                        return false;
+                    }
                 }
             }
+
             const practicedAt = parseDate(card.last_practiced_at ?? null);
+
             if (practicedFrom || practicedTo) {
-                if (!practicedAt) return false;
-                if (practicedFrom && practicedAt < new Date(practicedFrom))
+                if (!practicedAt) {
                     return false;
+                }
+
+                if (practicedFrom && practicedAt < new Date(practicedFrom)) {
+                    return false;
+                }
+
                 if (practicedTo) {
                     const toDate = new Date(practicedTo);
                     toDate.setHours(23, 59, 59, 999);
-                    if (practicedAt > toDate) return false;
+
+                    if (practicedAt > toDate) {
+                        return false;
+                    }
                 }
             }
+
             return true;
         });
     }, [
@@ -186,7 +225,9 @@ export default function FocusedPracticeFlashcards() {
 
     // Start Session
     const startSession = () => {
-        if (filteredCards.length === 0) return;
+        if (filteredCards.length === 0) {
+            return;
+        }
 
         // Create a copy to avoid mutating the original filtered list
         const shuffled = [...filteredCards];
@@ -221,7 +262,10 @@ export default function FocusedPracticeFlashcards() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const currentCard = sessionQueue[currentIndex];
-        if (!currentCard || !userAnswer.trim() || submitting) return;
+
+        if (!currentCard || !userAnswer.trim() || submitting) {
+            return;
+        }
 
         setSubmitting(true);
         setFeedback(null);
@@ -271,13 +315,6 @@ export default function FocusedPracticeFlashcards() {
             resetCardState();
         } else {
             setSessionComplete(true);
-        }
-    };
-
-    const handlePrev = () => {
-        if (currentIndex > 0) {
-            setCurrentIndex((prev) => prev - 1);
-            resetCardState();
         }
     };
 

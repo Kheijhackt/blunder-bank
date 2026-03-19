@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
-import { validateFEN, getFenImageData } from '@/utils/chess';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import axios from 'axios';
+import { Save, Trash2, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import {
     Dialog,
     DialogContent,
@@ -12,8 +11,9 @@ import {
     DialogTitle,
     DialogFooter,
 } from '@/components/ui/dialog';
-import { Save, Trash2, AlertCircle } from 'lucide-react';
-import axios from 'axios';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { getFenImageData } from '@/utils/chess';
 
 interface FlashCardData {
     fen: string;
@@ -50,7 +50,7 @@ export default function EditCardModal({
     const [isDeleting, setIsDeleting] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
-    const { data, setData, processing, errors } = useForm<FlashCardData>({
+    const { data, setData, processing } = useForm<FlashCardData>({
         fen: '',
         correct_move: '',
         note: '',
@@ -72,11 +72,14 @@ export default function EditCardModal({
                 source_game_url: card.source_game_url ?? '',
             });
         }
-    }, [card]);
+    }, [card, setData]);
 
     // Validate FEN & Update Image
     useEffect(() => {
-        if (!open) return;
+        if (!open) {
+            return;
+        }
+
         const result = getFenImageData(data.fen);
         setIsFenValid(result.isValid);
         setImageUrl(result.isValid ? result.imageUrl : null);
@@ -84,20 +87,33 @@ export default function EditCardModal({
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!card || !isFenValid || !data.correct_move.trim()) return;
+
+        if (!card || !isFenValid || !data.correct_move.trim()) {
+            return;
+        }
 
         setIsSaving(true); // ✅ Start Loading
 
         const formData = new FormData();
         formData.append('fen', data.fen);
         formData.append('correct_move', data.correct_move);
-        if (data.note) formData.append('note', data.note);
-        if (data.user_elo_at_time)
+
+        if (data.note) {
+            formData.append('note', data.note);
+        }
+
+        if (data.user_elo_at_time) {
             formData.append('user_elo_at_time', String(data.user_elo_at_time));
-        if (data.opening_name)
+        }
+
+        if (data.opening_name) {
             formData.append('opening_name', data.opening_name);
-        if (data.source_game_url)
+        }
+
+        if (data.source_game_url) {
             formData.append('source_game_url', data.source_game_url);
+        }
+
         formData.append('_method', 'PATCH');
 
         try {
@@ -112,10 +128,15 @@ export default function EditCardModal({
     };
 
     const handleDelete = async () => {
-        if (!card || !confirm('Are you sure you want to delete this blunder?'))
+        if (
+            !card ||
+            !confirm('Are you sure you want to delete this blunder?')
+        ) {
             return;
+        }
 
         setIsDeleting(true);
+
         try {
             await axios.delete(`/api/flashcards/${card.id}`);
             onOpenChange(false);
@@ -127,7 +148,9 @@ export default function EditCardModal({
         }
     };
 
-    if (!card) return null;
+    if (!card) {
+        return null;
+    }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

@@ -1,20 +1,5 @@
 import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import { blundersList, practiceFlashCards } from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-
-// Shadcn Components
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-
-// Utils & Icons
-import { getFenImageData, validateFEN } from '@/utils/chess';
 import {
     CheckCircle2,
     XCircle,
@@ -24,6 +9,21 @@ import {
     AlertCircle,
     Trophy,
 } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import AppLayout from '@/layouts/app-layout';
+import { blundersList, practiceFlashCards } from '@/routes';
+import type { BreadcrumbItem } from '@/types';
+
+// Shadcn Components
+
+// Utils & Icons
+import { getFenImageData } from '@/utils/chess';
 
 interface FlashCard {
     id: number;
@@ -76,6 +76,7 @@ export default function PracticeFlashcards() {
             if (!data || !data.fen) {
                 setError('No more cards available for practice! Great job.');
                 setCard(null);
+
                 return;
             }
 
@@ -124,7 +125,10 @@ export default function PracticeFlashcards() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!card || !userAnswer.trim() || submitting) return;
+
+        if (!card || !userAnswer.trim() || submitting) {
+            return;
+        }
 
         setSubmitting(true);
         setFeedback(null);
@@ -342,7 +346,9 @@ export default function PracticeFlashcards() {
         );
     }
 
-    if (!card) return null;
+    if (!card) {
+        return null;
+    }
 
     const { isValid, imageUrl } = getFenImageData(card.fen);
     const turn = isValid

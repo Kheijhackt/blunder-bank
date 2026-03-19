@@ -1,8 +1,6 @@
 import { Link } from '@inertiajs/react';
 import {
-    BookOpen,
     BrainCircuit,
-    FolderGit2,
     Goal,
     Info,
     LayoutGrid,

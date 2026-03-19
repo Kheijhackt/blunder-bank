@@ -1,28 +1,5 @@
 import { Head } from '@inertiajs/react';
-import AppLayout from '@/layouts/app-layout';
-import {
-    dashboard,
-    practiceFlashCards,
-    focusedPracticeFlashCards,
-    blundersList,
-} from '@/routes';
-import type { BreadcrumbItem } from '@/types';
-import { useEffect, useState } from 'react';
 import axios from 'axios';
-
-// Shadcn Components
-import {
-    Card,
-    CardContent,
-    CardHeader,
-    CardTitle,
-    CardDescription,
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-
-// Icons
 import {
     Flame,
     Target,
@@ -33,6 +10,29 @@ import {
     BrainCircuit,
     AlertCircle,
 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+    CardDescription,
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import AppLayout from '@/layouts/app-layout';
+import {
+    dashboard,
+    practiceFlashCards,
+    focusedPracticeFlashCards,
+    blundersList,
+} from '@/routes';
+import type { BreadcrumbItem } from '@/types';
+
+// Shadcn Components
+
+// Icons
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -105,7 +105,9 @@ export default function Dashboard() {
         );
     }
 
-    if (!stats) return null;
+    if (!stats) {
+return null;
+}
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

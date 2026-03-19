@@ -1,5 +1,7 @@
-import { useState, FormEvent, useEffect } from 'react';
-import axios, { AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios';
+import axios from 'axios';
+import type { FormEvent} from 'react';
+import { useState, useEffect } from 'react';
 
 interface FlashCard {
     id: number;
@@ -77,7 +79,9 @@ export default function ShowAttempt({ id }: { id: number }) {
         }
     };
 
-    if (loading) return <div>Loading flashcard...</div>;
+    if (loading) {
+return <div>Loading flashcard...</div>;
+}
 
     return (
         <div
