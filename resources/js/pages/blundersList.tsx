@@ -214,7 +214,7 @@ export default function BlundersList() {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Blunders List" />
+            <Head title="Library" />
 
             <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
                 {/* Header & Controls */}

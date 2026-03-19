@@ -7,6 +7,8 @@ import {
     Info,
     LayoutGrid,
     LibraryBig,
+    Send,
+    Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -56,18 +58,18 @@ const mainNavItems: NavItem[] = [
         href: guide(),
         icon: Info,
     },
+    {
+        title: 'About Us',
+        href: '#',
+        icon: Users,
+    },
 ];
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: FolderGit2,
-    },
-    {
-        title: 'Documentation',
-        href: 'https://laravel.com/docs/starter-kits#react',
-        icon: BookOpen,
+        title: 'Contact Me',
+        href: '#',
+        icon: Send,
     },
 ];
 
@@ -94,6 +96,9 @@ export function AppSidebar() {
                 <NavFooter items={footerNavItems} className="mt-auto" />
                 <NavUser />
             </SidebarFooter>
+            <footer className="p-1 text-center text-xs text-muted-foreground">
+                <p>© {new Date().getFullYear()} Blunder Bank. Made by Calify</p>
+            </footer>
         </Sidebar>
     );
 }

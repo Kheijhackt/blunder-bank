@@ -178,7 +178,7 @@ export default function PracticeFlashcards() {
     if (!hasStarted) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Practice Mode" />
+                <Head title="Smart Practice" />
                 <div className="flex h-full items-center justify-center p-6">
                     <Card className="w-full max-w-2xl overflow-hidden shadow-xl">
                         <CardContent className="p-0">
