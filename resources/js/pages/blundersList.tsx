@@ -202,7 +202,6 @@ export default function BlundersList() {
     if (loading) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Blunders List" />
                 <div className="flex h-full items-center justify-center">
                     <p className="text-lg font-semibold text-muted-foreground">
                         Loading your blunders...
@@ -419,7 +418,12 @@ export default function BlundersList() {
                                     No blunders match your filters
                                 </h3>
                                 <p className="text-sm text-muted-foreground">
-                                    Try adjusting your search or filters.
+                                    Try adjusting your search or filters. You
+                                    may add new blunders by clicking the{' '}
+                                    <span className="font-semibold">
+                                        Add New
+                                    </span>{' '}
+                                    button.
                                 </p>
                                 {cards.length > 0 && (
                                     <Button

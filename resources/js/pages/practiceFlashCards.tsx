@@ -82,7 +82,7 @@ export default function PracticeFlashcards() {
             setCard(data);
         } catch (err) {
             console.error(err);
-            setError('Failed to load next card. Please try again.');
+            setError('No blunders found. Please add some.');
         } finally {
             setLoading(false);
         }
@@ -105,8 +105,7 @@ export default function PracticeFlashcards() {
 
     const handleExitToLibrary = () => {
         // navigate to blundersList() route using inertia
-        const url = blundersList().url;
-        window.location.href = url;
+        window.location.href = blundersList().url;
     };
 
     // Only fetch when the user actually clicks "Start Practice"
@@ -334,11 +333,7 @@ export default function PracticeFlashcards() {
                         <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
                         <h2 className="text-xl font-bold">Session Complete!</h2>
                         <p className="text-muted-foreground">{error}</p>
-                        <Button
-                            onClick={() =>
-                                (window.location.href = '/flashcards')
-                            }
-                        >
+                        <Button onClick={handleExitToLibrary}>
                             Back to Library
                         </Button>
                     </Card>
