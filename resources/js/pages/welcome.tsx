@@ -262,7 +262,7 @@ export default function Welcome({
                     className="mx-auto mt-40 w-full max-w-5xl scroll-mt-40"
                 >
                     <ShowGuideContent />
-                    <div className="flex flex-col justify-center gap-3 sm:flex-row">
+                    <div className="mx-5 flex flex-col justify-center gap-3 sm:flex-row">
                         {auth.user ? (
                             <Link
                                 href={blundersList()}

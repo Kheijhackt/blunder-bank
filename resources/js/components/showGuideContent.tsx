@@ -29,7 +29,7 @@ import {
 
 export default function ShowGuideContent() {
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 p-5">
             {/* Hero Section */}
             <div className="mx-auto max-w-3xl space-y-4 text-center">
                 <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
