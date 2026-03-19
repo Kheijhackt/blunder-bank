@@ -38,6 +38,7 @@ class UserController extends Controller
           : null;
 
       $currentStreakCount = $user->stats_current_streak ?? 0;
+      $highestStreakCount = $user->stats_highest_streak ?? 0;
       $isActive = false;
       $isAtRisk = false;
       $canStartNew = false;
@@ -89,6 +90,7 @@ class UserController extends Controller
           
           // Updated Streak Response
           'streak_count' => $displayStreak,
+          'streak_highest_count' => $highestStreakCount,
           'streak_is_active' => $isActive,
           'streak_is_at_risk' => $isAtRisk,
           'streak_can_start_new' => $canStartNew,

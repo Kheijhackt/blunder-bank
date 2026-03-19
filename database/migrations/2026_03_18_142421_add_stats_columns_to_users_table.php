@@ -27,17 +27,15 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
-            Schema::table('users', function (Blueprint $table) 
-            {
-                // Drop the columns in reverse order of creation (optional but clean)
-                $table->dropColumn([
-                    'stats_last_practiced_at',
-                    'stats_current_streak',
-                    'stats_total_wrong',
-                    'stats_total_correct',
-                ]);
-            });
+        Schema::table('users', function (Blueprint $table) 
+        {
+            // Drop the columns in reverse order of creation (optional but clean)
+            $table->dropColumn([
+                'stats_last_practiced_at',
+                'stats_current_streak',
+                'stats_total_wrong',
+                'stats_total_correct',
+            ]);
         });
     }
 };

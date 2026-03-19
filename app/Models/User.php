@@ -83,6 +83,11 @@ class User extends Authenticatable
         $newStreak = $this->calculateStreakLogic($oldLastPracticed, $now);
 
         $this->stats_current_streak = $newStreak;
+
+        // Update the highest streak if necessary
+        if ($newStreak > $this->stats_highest_streak) {
+            $this->stats_highest_streak = $newStreak;
+        }
         
         // Save the model immediately so the DB is up to date
         $this->save();
@@ -151,6 +156,7 @@ class User extends Authenticatable
             : null;
 
         $currentStreak = $this->stats_current_streak ?? 0;
+        $highestStreak = $this->stats_highest_streak ?? 0;
         $isActive = false;
         $isAtRisk = false;
         $canStartNew = false;
@@ -180,7 +186,8 @@ class User extends Authenticatable
         }
 
         return [
-            'count' => $displayStreak,
+            'currentStreakCount' => $displayStreak,
+            'highestStreakCount' => $highestStreak,
             'is_active' => $isActive,
             'is_at_risk' => $isAtRisk,
             'can_start_new' => $canStartNew,

@@ -49,6 +49,7 @@ interface DashboardStats {
     cards_due: number;
     total_cards: number;
     streak_count: number;
+    streak_highest_count: number;
     streak_is_active: boolean;
     streak_is_at_risk: boolean;
     streak_can_start_new: boolean;
@@ -75,6 +76,7 @@ export default function Dashboard() {
                     cards_due: 12,
                     total_cards: 250,
                     streak_count: 5,
+                    streak_highest_count: 15,
                     streak_is_active: true,
                     streak_is_at_risk: false,
                     streak_can_start_new: true,
@@ -384,7 +386,7 @@ export default function Dashboard() {
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4 pt-2">
+                            <div className="grid grid-cols-3 gap-4 pt-2">
                                 <div className="rounded-md bg-muted/50 p-3 text-center">
                                     <div className="text-2xl font-bold text-green-600">
                                         {stats.total_correct}
@@ -399,6 +401,14 @@ export default function Dashboard() {
                                     </div>
                                     <div className="text-[10px] tracking-wider text-muted-foreground uppercase">
                                         Incorrect
+                                    </div>
+                                </div>
+                                <div className="rounded-md bg-muted/50 p-3 text-center">
+                                    <div className="text-2xl font-bold text-orange-500">
+                                        {stats.streak_highest_count}
+                                    </div>
+                                    <div className="text-[10px] tracking-wider text-muted-foreground uppercase">
+                                        Best Streak
                                     </div>
                                 </div>
                             </div>
