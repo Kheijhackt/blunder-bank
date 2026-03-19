@@ -14,6 +14,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { getFenImageData } from '@/utils/chess';
+import { Textarea } from '@/components/ui/textarea';
 
 interface FlashCardData {
     fen: string;
@@ -252,7 +253,7 @@ export default function EditCardModal({
                                 onChange={(e) =>
                                     setData('user_elo_at_time', e.target.value)
                                 }
-                                placeholder="1200"
+                                placeholder="e.g., 1200"
                             />
                         </div>
                         <div className="space-y-2">
@@ -262,12 +263,12 @@ export default function EditCardModal({
                                 onChange={(e) =>
                                     setData('opening_name', e.target.value)
                                 }
-                                placeholder="Sicilian"
+                                placeholder="e.g., Sicilian Defense"
                             />
                         </div>
                         <div className="col-span-2 space-y-2">
                             <Label htmlFor="edit-note">Note / Remarks</Label>
-                            <Input
+                            <Textarea
                                 value={data.note || ''}
                                 onChange={(e) =>
                                     setData('note', e.target.value)
@@ -283,7 +284,7 @@ export default function EditCardModal({
                                 onChange={(e) =>
                                     setData('source_game_url', e.target.value)
                                 }
-                                placeholder="https://lichess.org/..."
+                                placeholder="https://lichess.org/... or https://www.chess.com/..."
                             />
                         </div>
                     </div>
