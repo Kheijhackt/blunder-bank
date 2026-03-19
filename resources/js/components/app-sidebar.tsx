@@ -24,6 +24,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import {
+    about,
     blundersList,
     dashboard,
     focusedPracticeFlashCards,
@@ -60,14 +61,14 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'About Us',
-        href: '#',
+        href: about(),
         icon: Users,
     },
 ];
 
 const footerNavItems: NavItem[] = [
     {
-        title: 'Contact Me',
+        title: 'Send Feedback',
         href: '#',
         icon: Send,
     },
