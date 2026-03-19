@@ -69,7 +69,7 @@ const mainNavItems: NavItem[] = [
 const footerNavItems: NavItem[] = [
     {
         title: 'Send Feedback',
-        href: '#',
+        href: 'https://docs.google.com/forms/d/e/1FAIpQLScmNx4z0hF40w7sEIS75k82WOthIH6Ofmh4AuoNrNPOfLd5MA/viewform?usp=publish-editor',
         icon: Send,
     },
 ];
