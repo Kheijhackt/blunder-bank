@@ -47,7 +47,7 @@ class FlashCardController extends Controller
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'fen' => [
                 'required',
                 'string',
@@ -62,18 +62,20 @@ class FlashCardController extends Controller
             'source_game_url'=> 'nullable|string',
         ]);
 
+        $data['fen'] = trim($data['fen']);
+        $data['correct_move'] = trim($data['correct_move']);
+        $data['note'] = isset($data['note']) ? trim($data['note']) : null;
+        $data['opening_name'] = isset($data['opening_name']) ? trim($data['opening_name']) : null;
+        $data['source_game_url'] = isset($data['source_game_url']) ? trim($data['source_game_url']) : null;
+
         FlashCard::create([
             'user_id' => Auth::id(),
-            'fen' => trim($request->input('fen')),
-            'correct_move' => trim($request->input('correct_move')),
-            'note' => trim($request->input('note')),
-            'user_elo_at_time' => trim($request->input('user_elo_at_time')),
-            'opening_name'=> trim($request->input('opening_name')),
-            'source_game_url'=> trim($request->input('source_game_url')),
+            ...$data,
         ]);
 
-        return redirect()->route('addFlashCard')->with('success', 'Card created!');
-
+        return response()->json([
+            'result'=> true,
+        ]);
     }
 
     /**
@@ -103,39 +105,39 @@ class FlashCardController extends Controller
      */
     public function update(Request $request, FlashCard $flashCard)
     {
-        if(!$this->isAuthorized($flashCard)) {
+        if (!$this->isAuthorized($flashCard)) {
             return $this->unauthorizedResponse();
         }
-        try {
-            $request->validate([
-                'fen' => [
-                    'required',
-                    'string',
-                    Rule::unique('flash_cards')->ignore($flashCard->id)->where(function ($query) {
-                        return $query->where('user_id', Auth::id());
-                    }),
-                ],
-                'correct_move' => 'required|string',
-                'note' => 'nullable|string',
-                'user_elo_at_time'=> 'nullable|string',
-                'opening_name'=> 'nullable|string',
-                'source_game_url'=> 'nullable|string',
-            ]);
-    
-            $flashCard->update($request->only(
-                [
-                    'fen', 'correct_move', 'note', 'user_elo_at_time','opening_name','source_game_url'
-                ]));
-    
-            return response()->json([
-                'result' => true,
-            ]);
-        }
-        catch (\Exception $e) {
-            return response()->json([
-                'result'=> $e->getMessage(),
-            ]);
-        }
+
+        $data = $request->validate([
+            'fen' => [
+                'required',
+                'string',
+                Rule::unique('flash_cards')
+                    ->ignore($flashCard->id)
+                    ->where(fn ($query) =>
+                        $query->where('user_id', Auth::id())
+                    ),
+            ],
+            'correct_move' => 'required|string',
+            'note' => 'nullable|string',
+            'user_elo_at_time'=> 'nullable|integer',
+            'opening_name'=> 'nullable|string',
+            'source_game_url'=> 'nullable|string',
+        ]);
+
+        // Trim only strings safely
+        $data['fen'] = trim($data['fen']);
+        $data['correct_move'] = trim($data['correct_move']);
+        $data['note'] = isset($data['note']) ? trim($data['note']) : null;
+        $data['opening_name'] = isset($data['opening_name']) ? trim($data['opening_name']) : null;
+        $data['source_game_url'] = isset($data['source_game_url']) ? trim($data['source_game_url']) : null;
+
+        $flashCard->update($data);
+
+        return response()->json([
+            'result' => true,
+        ]);
     }
 
     /**
