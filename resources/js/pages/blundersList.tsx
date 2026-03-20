@@ -283,22 +283,19 @@ export default function BlundersList() {
                                     <Skeleton className="h-full w-full" />
                                 </div>
 
-                                {/* Correct Move Label + Text */}
-                                <div className="space-y-1">
-                                    <Skeleton className="h-3 w-24" />
-                                    <Skeleton className="h-5 w-32" />
+                                {/* ROW 1 SKELETON: Correct Move + Note Button */}
+                                <div className="flex items-start justify-between gap-2">
+                                    <div className="flex-1 space-y-1">
+                                        <Skeleton className="h-3 w-24" />
+                                        <Skeleton className="h-5 w-32" />
+                                    </div>
+                                    <div className="shrink-0 pt-[18px]">
+                                        <Skeleton className="h-6 w-20" />
+                                    </div>
                                 </div>
 
-                                {/* Grid Details (Opening, Note, ELO, Practiced) */}
+                                {/* ROW 2 SKELETON: ELO and Last Practiced */}
                                 <div className="grid grid-cols-2 gap-2 text-[11px]">
-                                    <div className="space-y-1">
-                                        <Skeleton className="h-3 w-16" />
-                                        <Skeleton className="h-3 w-full" />
-                                    </div>
-                                    <div className="space-y-1 pt-[14px]">
-                                        <Skeleton className="h-6 w-full" />{' '}
-                                        {/* Matches Button Height */}
-                                    </div>
                                     <div className="space-y-1">
                                         <Skeleton className="h-3 w-8" />
                                         <Skeleton className="h-3 w-12" />
@@ -307,6 +304,12 @@ export default function BlundersList() {
                                         <Skeleton className="h-3 w-20" />
                                         <Skeleton className="h-3 w-16" />
                                     </div>
+                                </div>
+
+                                {/* ROW 3 SKELETON: Opening (Full Width) */}
+                                <div className="space-y-1">
+                                    <Skeleton className="h-3 w-16" />
+                                    <Skeleton className="h-3 w-full" />
                                 </div>
 
                                 {/* Footer (Badge + Link) */}
@@ -576,6 +579,7 @@ export default function BlundersList() {
                                             key={card.id}
                                             className="relative flex flex-col space-y-3 overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
                                         >
+                                            {/* Date */}
                                             <div className="flex justify-end">
                                                 <span className="text-[10px] tracking-wider text-muted-foreground uppercase">
                                                     {formatDate(
@@ -583,6 +587,8 @@ export default function BlundersList() {
                                                     )}
                                                 </span>
                                             </div>
+
+                                            {/* Image */}
                                             <div className="relative aspect-square w-full overflow-hidden rounded-md border border-muted bg-white">
                                                 {isValid ? (
                                                     <img
@@ -601,8 +607,10 @@ export default function BlundersList() {
                                                     </div>
                                                 )}
                                             </div>
-                                            <div className="space-y-1">
-                                                <div>
+
+                                            {/* ROW 1: Correct Move (Left) + Show Note Button (Right) */}
+                                            <div className="flex items-start justify-between gap-2">
+                                                <div className="flex-1 space-y-1">
                                                     <span className="text-[10px] font-bold text-muted-foreground uppercase">
                                                         Correct Move
                                                     </span>
@@ -610,19 +618,7 @@ export default function BlundersList() {
                                                         {card.correct_move}
                                                     </p>
                                                 </div>
-                                            </div>
-                                            <div className="grid grid-cols-2 gap-2 text-[11px]">
-                                                <div>
-                                                    <span className="block font-bold text-muted-foreground uppercase">
-                                                        Opening
-                                                    </span>
-                                                    <span className="block truncate">
-                                                        {card.opening_name ||
-                                                            '-'}
-                                                    </span>
-                                                </div>
-
-                                                <div className="flex w-fit flex-col justify-start pt-[14px]">
+                                                <div className="shrink-0 pt-[18px]">
                                                     <Popover>
                                                         <PopoverTrigger asChild>
                                                             <Button
@@ -639,17 +635,18 @@ export default function BlundersList() {
                                                         <PopoverContent
                                                             className="w-fit max-w-[250px] p-3 text-xs"
                                                             side="top"
-                                                            align="center"
+                                                            align="end"
                                                         >
-                                                            <div className="space-y-1">
-                                                                <p className="break-words whitespace-pre-wrap text-muted-foreground">
-                                                                    {card.note}
-                                                                </p>
-                                                            </div>
+                                                            <p className="break-words whitespace-pre-wrap text-muted-foreground">
+                                                                {card.note}
+                                                            </p>
                                                         </PopoverContent>
                                                     </Popover>
                                                 </div>
+                                            </div>
 
+                                            {/* ROW 2: ELO and Last Practiced (Side by Side) */}
+                                            <div className="grid grid-cols-2 gap-2 text-[11px]">
                                                 <div>
                                                     <span className="block font-bold text-muted-foreground uppercase">
                                                         ELO
@@ -671,6 +668,18 @@ export default function BlundersList() {
                                                     </span>
                                                 </div>
                                             </div>
+
+                                            {/* ROW 3: Opening (Full Width) */}
+                                            <div className="text-[11px]">
+                                                <span className="block font-bold text-muted-foreground uppercase">
+                                                    Opening
+                                                </span>
+                                                <span className="block w-full truncate">
+                                                    {card.opening_name || '-'}
+                                                </span>
+                                            </div>
+
+                                            {/* Footer: Accuracy + Source */}
                                             <div className="mt-auto flex items-center justify-between border-t border-sidebar-border/50 pt-3">
                                                 <Badge
                                                     variant={accuracyVariant}
@@ -697,6 +706,8 @@ export default function BlundersList() {
                                                     </span>
                                                 )}
                                             </div>
+
+                                            {/* Edit Button */}
                                             <div className="pt-1">
                                                 <Button
                                                     variant="outline"
