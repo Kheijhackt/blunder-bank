@@ -18,10 +18,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('user-guide','guide')->name('guide');
     Route::inertia('about','about')->name('about');
 
-    Route::inertia('add-flashcard','addFlashCard')->name('addFlashCard');
-    Route::inertia('edit-flashcard','editFlashCard')->name('editFlashCard');
-    Route::inertia('show-attempt','showAttempt')->name('showAttempt');
-
     // For APIs
     // ==========================================
     // 1. CRUD Operations
