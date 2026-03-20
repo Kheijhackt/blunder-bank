@@ -130,6 +130,7 @@ class FlashCardController extends Controller
         $data['fen'] = trim($data['fen']);
         $data['correct_move'] = trim($data['correct_move']);
         $data['note'] = isset($data['note']) ? trim($data['note']) : null;
+        $data['user_elo_at_time'] = isset($data['user_elo_at_time']) ? $data['user_elo_at_time'] : null;
         $data['opening_name'] = isset($data['opening_name']) ? trim($data['opening_name']) : null;
         $data['source_game_url'] = isset($data['source_game_url']) ? trim($data['source_game_url']) : null;
 
