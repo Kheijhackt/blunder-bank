@@ -13,8 +13,9 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getFenImageData } from '@/utils/chess';
 import { Textarea } from '@/components/ui/textarea';
+import { getFenImageData } from '@/utils/chess';
+import { NotificationDialog } from './notificationDialog';
 
 interface FlashCardData {
     fen: string;
@@ -39,6 +40,11 @@ export default function NewCardModal({
     const [imageUrl, setImageUrl] = useState<string | null>(null);
     const [isFenValid, setIsFenValid] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
+    const [showErrorDialog, setShowErrorDialog] = useState(false);
+    const [errorHeaderMessage, setErrorHeaderMessage] = useState('Error');
+    const [errorMessage, setErrorMessage] = useState(
+        'An unexpected error occurred.',
+    );
 
     const { data, setData, processing } = useForm<FlashCardData>({
         fen: '',
@@ -107,190 +113,215 @@ export default function NewCardModal({
         }
 
         try {
-            // POST Request to create new card
             await axios.post('/api/flashcards', formData);
             onOpenChange(false);
             onSuccess();
-        } catch (err) {
-            console.error(err);
+        } catch (err: any) {
+            // 1. Extract error message if available, otherwise use default
+            const msg =
+                err?.response?.data?.message ||
+                err?.message ||
+                'Failed to create card. Please try again.';
+            setErrorHeaderMessage('Error');
+            setErrorMessage(msg);
+
+            // 2. Open the nested error dialog
+            setShowErrorDialog(true);
         } finally {
             setIsCreating(false);
         }
     };
 
     return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
-                <DialogHeader>
-                    <DialogTitle className="text-xl font-bold">
-                        Add New Blunder
-                    </DialogTitle>
-                </DialogHeader>
+        <>
+            <Dialog open={open} onOpenChange={onOpenChange}>
+                <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-bold">
+                            Add New Blunder
+                        </DialogTitle>
+                    </DialogHeader>
 
-                <form onSubmit={handleCreate} className="space-y-6 py-4">
-                    {/* 1. FEN IMAGE PREVIEW */}
-                    <div className="flex flex-col items-center justify-center space-y-3 rounded-lg border bg-muted/50 p-4">
-                        <div className="space-y-1 text-center">
-                            <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                                Position Preview
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                                {isFenValid
-                                    ? data.fen.split(' ')[1] === 'w'
-                                        ? 'White to Move'
-                                        : 'Black to Move'
-                                    : 'Invalid Position'}
-                            </p>
+                    <form onSubmit={handleCreate} className="space-y-6 py-4">
+                        {/* 1. FEN IMAGE PREVIEW */}
+                        <div className="flex flex-col items-center justify-center space-y-3 rounded-lg border bg-muted/50 p-4">
+                            <div className="space-y-1 text-center">
+                                <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+                                    Position Preview
+                                </h3>
+                                <p className="text-xs text-muted-foreground">
+                                    {isFenValid
+                                        ? data.fen.split(' ')[1] === 'w'
+                                            ? 'White to Move'
+                                            : 'Black to Move'
+                                        : 'Invalid Position'}
+                                </p>
+                            </div>
+
+                            <div className="relative aspect-square w-full max-w-[280px] overflow-hidden rounded-md border bg-white shadow-sm">
+                                {imageUrl ? (
+                                    <img
+                                        src={imageUrl}
+                                        alt="Board Preview"
+                                        className="h-full w-full object-cover"
+                                        style={{ objectPosition: 'top' }}
+                                    />
+                                ) : (
+                                    <div className="flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground">
+                                        <AlertCircle className="mb-2 h-8 w-8 opacity-50" />
+                                        <span className="text-sm font-medium">
+                                            {data.fen
+                                                ? 'Invalid FEN'
+                                                : 'Enter FEN to preview'}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        <div className="relative aspect-square w-full max-w-[280px] overflow-hidden rounded-md border bg-white shadow-sm">
-                            {imageUrl ? (
-                                <img
-                                    src={imageUrl}
-                                    alt="Board Preview"
-                                    className="h-full w-full object-cover"
-                                    style={{ objectPosition: 'top' }}
+                        {/* 2. FEN INPUT FIELD */}
+                        <div className="space-y-2">
+                            <Label htmlFor="new-fen" className="font-semibold">
+                                FEN Text{' '}
+                                <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="new-fen"
+                                value={data.fen}
+                                onChange={(e) => setData('fen', e.target.value)}
+                                className={`font-mono text-xs ${!isFenValid && data.fen ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                                placeholder="rnbqkbnr/pppppppp..."
+                            />
+                            {!isFenValid && data.fen && (
+                                <Alert variant="destructive" className="py-2">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription className="text-xs">
+                                        Invalid FEN. Check board position and
+                                        turn (w/b).
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+
+                        {/* 3. CORRECT MOVE */}
+                        <div className="space-y-2">
+                            <Label htmlFor="new-move" className="font-semibold">
+                                Correct Move{' '}
+                                <span className="text-destructive">*</span>
+                            </Label>
+                            <Input
+                                id="new-move"
+                                value={data.correct_move}
+                                onChange={(e) =>
+                                    setData('correct_move', e.target.value)
+                                }
+                                placeholder="e.g., Nf3, O-O"
+                                className={`font-semibold ${!data.correct_move.trim() ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                            />
+                            {!data.correct_move.trim() && (
+                                <p className="text-xs text-destructive">
+                                    Move cannot be empty.
+                                </p>
+                            )}
+                        </div>
+
+                        {/* 4. OTHER DETAILS */}
+                        <div className="grid grid-cols-2 gap-4 pt-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="new-elo">ELO at Time</Label>
+                                <Input
+                                    type="number"
+                                    value={data.user_elo_at_time || ''}
+                                    onChange={(e) =>
+                                        setData(
+                                            'user_elo_at_time',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="e.g., 1200"
                                 />
-                            ) : (
-                                <div className="flex h-full flex-col items-center justify-center p-4 text-center text-muted-foreground">
-                                    <AlertCircle className="mb-2 h-8 w-8 opacity-50" />
-                                    <span className="text-sm font-medium">
-                                        {data.fen
-                                            ? 'Invalid FEN'
-                                            : 'Enter FEN to preview'}
-                                    </span>
-                                </div>
-                            )}
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="new-opening">Opening</Label>
+                                <Input
+                                    value={data.opening_name || ''}
+                                    onChange={(e) =>
+                                        setData('opening_name', e.target.value)
+                                    }
+                                    placeholder="e.g., Sicilian Defense"
+                                />
+                            </div>
+                            <div className="col-span-2 space-y-2">
+                                <Label htmlFor="new-note">Note / Remarks</Label>
+                                <Textarea
+                                    value={data.note || ''}
+                                    onChange={(e) =>
+                                        setData('note', e.target.value)
+                                    }
+                                    placeholder="What went wrong?"
+                                />
+                            </div>
+                            <div className="col-span-2 space-y-2">
+                                <Label htmlFor="new-url">Source Game URL</Label>
+                                <Input
+                                    type="url"
+                                    value={data.source_game_url || ''}
+                                    onChange={(e) =>
+                                        setData(
+                                            'source_game_url',
+                                            e.target.value,
+                                        )
+                                    }
+                                    placeholder="https://lichess.org/... or https://www.chess.com/..."
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    {/* 2. FEN INPUT FIELD */}
-                    <div className="space-y-2">
-                        <Label htmlFor="new-fen" className="font-semibold">
-                            FEN Text <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="new-fen"
-                            value={data.fen}
-                            onChange={(e) => setData('fen', e.target.value)}
-                            className={`font-mono text-xs ${!isFenValid && data.fen ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                            placeholder="rnbqkbnr/pppppppp..."
-                        />
-                        {!isFenValid && data.fen && (
-                            <Alert variant="destructive" className="py-2">
-                                <AlertCircle className="h-4 w-4" />
-                                <AlertDescription className="text-xs">
-                                    Invalid FEN. Check board position and turn
-                                    (w/b).
-                                </AlertDescription>
-                            </Alert>
-                        )}
-                    </div>
+                        {/* 5. BUTTONS */}
+                        <DialogFooter className="mt-6 grid grid-cols-2 gap-4 border-t pt-6">
+                            {/* Left: Cancel */}
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => onOpenChange(false)}
+                                disabled={processing || isCreating}
+                                className="w-full"
+                            >
+                                Cancel
+                            </Button>
 
-                    {/* 3. CORRECT MOVE */}
-                    <div className="space-y-2">
-                        <Label htmlFor="new-move" className="font-semibold">
-                            Correct Move{' '}
-                            <span className="text-destructive">*</span>
-                        </Label>
-                        <Input
-                            id="new-move"
-                            value={data.correct_move}
-                            onChange={(e) =>
-                                setData('correct_move', e.target.value)
-                            }
-                            placeholder="e.g., Nf3, O-O"
-                            className={`font-semibold ${!data.correct_move.trim() ? 'border-destructive focus-visible:ring-destructive' : ''}`}
-                        />
-                        {!data.correct_move.trim() && (
-                            <p className="text-xs text-destructive">
-                                Move cannot be empty.
-                            </p>
-                        )}
-                    </div>
-
-                    {/* 4. OTHER DETAILS */}
-                    <div className="grid grid-cols-2 gap-4 pt-2">
-                        <div className="space-y-2">
-                            <Label htmlFor="new-elo">ELO at Time</Label>
-                            <Input
-                                type="number"
-                                value={data.user_elo_at_time || ''}
-                                onChange={(e) =>
-                                    setData('user_elo_at_time', e.target.value)
+                            {/* Right: Create */}
+                            <Button
+                                type="submit"
+                                disabled={
+                                    processing ||
+                                    isCreating ||
+                                    !isFenValid ||
+                                    !data.correct_move.trim()
                                 }
-                                placeholder="e.g., 1200"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="new-opening">Opening</Label>
-                            <Input
-                                value={data.opening_name || ''}
-                                onChange={(e) =>
-                                    setData('opening_name', e.target.value)
-                                }
-                                placeholder="e.g., Sicilian Defense"
-                            />
-                        </div>
-                        <div className="col-span-2 space-y-2">
-                            <Label htmlFor="new-note">Note / Remarks</Label>
-                            <Textarea
-                                value={data.note || ''}
-                                onChange={(e) =>
-                                    setData('note', e.target.value)
-                                }
-                                placeholder="What went wrong?"
-                            />
-                        </div>
-                        <div className="col-span-2 space-y-2">
-                            <Label htmlFor="new-url">Source Game URL</Label>
-                            <Input
-                                type="url"
-                                value={data.source_game_url || ''}
-                                onChange={(e) =>
-                                    setData('source_game_url', e.target.value)
-                                }
-                                placeholder="https://lichess.org/... or https://www.chess.com/..."
-                            />
-                        </div>
-                    </div>
-
-                    {/* 5. BUTTONS */}
-                    <DialogFooter className="mt-6 grid grid-cols-2 gap-4 border-t pt-6">
-                        {/* Left: Cancel */}
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => onOpenChange(false)}
-                            disabled={processing || isCreating}
-                            className="w-full"
-                        >
-                            Cancel
-                        </Button>
-
-                        {/* Right: Create */}
-                        <Button
-                            type="submit"
-                            disabled={
-                                processing ||
-                                isCreating ||
-                                !isFenValid ||
-                                !data.correct_move.trim()
-                            }
-                            className="w-full"
-                        >
-                            {isCreating ? (
-                                'Creating...'
-                            ) : (
-                                <>
-                                    <Save className="mr-2 h-4 w-4" /> Create
-                                    Card
-                                </>
-                            )}
-                        </Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
-        </Dialog>
+                                className="w-full"
+                            >
+                                {isCreating ? (
+                                    'Creating...'
+                                ) : (
+                                    <>
+                                        <Save className="mr-2 h-4 w-4" /> Create
+                                        Card
+                                    </>
+                                )}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+            {/* NESTED ERROR DIALOG */}
+            <NotificationDialog
+                isOpen={showErrorDialog}
+                header={errorHeaderMessage}
+                message={errorMessage}
+                variant="warning"
+                onClose={() => setShowErrorDialog(false)}
+            />
+        </>
     );
 }
