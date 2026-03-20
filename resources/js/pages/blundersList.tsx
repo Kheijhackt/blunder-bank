@@ -11,12 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
+
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +21,11 @@ import type { BreadcrumbItem } from '@/types';
 
 // Utils
 import { getFenImageData } from '@/utils/chess';
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface FlashCard {
     id: number;
@@ -622,30 +622,32 @@ export default function BlundersList() {
                                                     </span>
                                                 </div>
 
-                                                <div className="flex flex-col justify-start pt-[14px]">
-                                                    <TooltipProvider>
-                                                        <Tooltip>
-                                                            <TooltipTrigger
-                                                                asChild
+                                                <div className="flex w-fit flex-col justify-start pt-[14px]">
+                                                    <Popover>
+                                                        <PopoverTrigger asChild>
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="h-6 w-fit px-2 text-[10px]"
+                                                                disabled={
+                                                                    !card.note
+                                                                }
                                                             >
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    className="h-6 w-full px-2 text-[10px]"
-                                                                    disabled={
-                                                                        !card.note
-                                                                    }
-                                                                >
-                                                                    Show Note
-                                                                </Button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent side="top">
-                                                                <p className="text-xs">
+                                                                Show Note
+                                                            </Button>
+                                                        </PopoverTrigger>
+                                                        <PopoverContent
+                                                            className="w-fit max-w-[250px] p-3 text-xs"
+                                                            side="top"
+                                                            align="center"
+                                                        >
+                                                            <div className="space-y-1">
+                                                                <p className="break-words whitespace-pre-wrap text-muted-foreground">
                                                                     {card.note}
                                                                 </p>
-                                                            </TooltipContent>
-                                                        </Tooltip>
-                                                    </TooltipProvider>
+                                                            </div>
+                                                        </PopoverContent>
+                                                    </Popover>
                                                 </div>
 
                                                 <div>
