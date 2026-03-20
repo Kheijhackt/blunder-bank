@@ -161,6 +161,9 @@ class FlashCardController extends Controller
         if (!$this->isAuthorized($flashCard)) {
             return $this->unauthorizedResponse();
         }
+
+        $correctPenalty = 1.0;
+        $incorrectPenalty = 10.0;
         
         $request->validate(['answer' => 'required|string']);
 
@@ -173,13 +176,13 @@ class FlashCardController extends Controller
         // 1. Update Card Stats
         if ($isCorrect) {
             $flashCard->increment('times_correct');
-            $flashCard->priority_score -= 10.0;
+            $flashCard->priority_score -= $correctPenalty;
             $flashCard->last_practiced_at = $now;
 
             $user->increment('stats_total_correct');
         } else {
             $flashCard->increment('times_wrong');
-            $flashCard->priority_score += 25.0;
+            $flashCard->priority_score += $incorrectPenalty;
             $user->increment('stats_total_wrong');
         }
         $flashCard->save();
@@ -194,97 +197,88 @@ class FlashCardController extends Controller
 
     // Algorithm for which card to practice next
     public function getNextCard() {
-    $user = Auth::user();
-    $now = Carbon::now();
+        $user = Auth::user();
+        $now = Carbon::now();
 
-    // Configuration Constants (Only used for practiced cards)
-    $timeDecayRate = 0.05;     // Points gained per minute
-    $halfLife = 45;            // Minutes until penalty is cut in half
-    $maxPenaltyDepth = 0.95;   // At 0 mins, multiplier = 0.05
+        // --- CONFIGURATION ---
+        $timeGrowthRate = 0.01;     // Multiplier increases by 0.01 per minute
+        $minBaseScore = 1.0;        // SAFETY NET: Prevents negative/zero raw scores from breaking math
 
-    // STEP 1: Check for New Cards (last_practiced_at IS NULL)
-    // Logic: Simply return the oldest created card. No scoring math needed.
-    $newCard = $user->flashCards()
-        ->whereNull('last_practiced_at')
-        ->orderBy('created_at', 'asc') // Oldest first
-        ->first();
+        // STEP 1: Check for New Cards
+        $newCard = $user->flashCards()
+            ->whereNull('last_practiced_at')
+            ->orderBy('created_at', 'asc')
+            ->first();
 
-    if ($newCard) {
-        // Found a new card. Return immediately.
+        if ($newCard) {
+            return response()->json([
+                'flash_card' => $newCard,
+                'debug_dynamic_score' => null,
+                'debug_static_score' => $newCard->priority_score,
+                'debug_multiplier' => null,
+                'is_new_card' => true
+            ]);
+        }
+
+        // STEP 2: Handle Practiced Cards
+        $candidates = $user->flashCards()
+            ->whereNotNull('last_practiced_at')
+            ->orderByDesc('priority_score') 
+            ->limit(50) 
+            ->get();
+
+        if ($candidates->isEmpty()) {
+            return response()->json(['message' => 'No flashcards available.', 'flash_card' => null], 404);
+        }
+
+        $bestCard = null;
+        $highestDynamicScore = -PHP_FLOAT_MAX;
+
+        foreach ($candidates as $card) {
+            $rawScore = $card->priority_score;
+            
+            // 1. Calculate Time Since Practice
+            $minutesSince = $now->diffInMinutes($card->last_practiced_at, true);
+            $minutesSince = max(0, $minutesSince);
+
+            // 2. Calculate Multiplier STARTING AT 0
+            // Formula: minutes * 0.01
+            // 0 mins = 0.0
+            // 1 min = 0.01
+            // 100 mins = 1.0 (Back to baseline)
+            // 200 mins = 2.0 (Double priority)
+            $multiplier = $minutesSince * $timeGrowthRate;
+
+            // 3. Apply Safety Net to Raw Score
+            // Ensures that even if rawScore is -500, we calculate based on at least 1.0
+            $effectiveBaseScore = max($minBaseScore, $rawScore);
+
+            // 4. Calculate Final Dynamic Score
+            $dynamicScore = $effectiveBaseScore * $multiplier;
+
+            if ($dynamicScore > $highestDynamicScore) {
+                $highestDynamicScore = $dynamicScore;
+                $bestCard = $card;
+            }
+        }
+
+        if (!$bestCard) {
+            return response()->json(['message' => 'No flashcards available.', 'flash_card' => null], 404);
+        }
+
+        // Debug calculations
+        $debugMinutes = $now->diffInMinutes($bestCard->last_practiced_at, true);
+        $debugMultiplier = max(0, $debugMinutes) * $timeGrowthRate;
+        $debugEffectiveBase = max($minBaseScore, $bestCard->priority_score);
+
         return response()->json([
-            'flash_card' => $newCard,
-            'debug_dynamic_score' => null, // Not applicable for new cards
-            'debug_static_score' => $newCard->priority_score,
-            'debug_multiplier' => null,    // Not applicable
-            'is_new_card' => true
+            'flash_card' => $bestCard,
+            'debug_dynamic_score' => round($highestDynamicScore, 4),
+            'debug_static_score' => $bestCard->priority_score,
+            'debug_effective_base_score' => round($debugEffectiveBase, 4),
+            'debug_multiplier' => round($debugMultiplier, 4), // Will be 0.00 immediately after practice
+            'debug_minutes_since' => $debugMinutes,
+            'is_new_card' => false
         ]);
     }
-
-    // STEP 2: No New Cards. Handle Practiced Cards.
-    // Fetch top 30 candidates based on STATIC priority_score DESC
-    $candidates = $user->flashCards()
-        ->whereNotNull('last_practiced_at')
-        ->orderByDesc('priority_score')
-        ->limit(30)
-        ->get();
-
-    if ($candidates->isEmpty()) {
-        return response()->json([
-            'message' => 'No flashcards available.',
-            'flash_card' => null
-        ], 404);
-    }
-
-    $bestCard = null;
-    $highestDynamicScore = -999999;
-
-    foreach ($candidates as $card) {
-        $currentScore = $card->priority_score;
-        
-        // Calculate Time Since Practice
-        $minutesSince = $now->diffInMinutes($card->last_practiced_at, false);
-        $minutesSince = max(0, $minutesSince);
-
-        // Calculate Multiplier (Exponential Decay Recovery)
-        // Formula: 1 - (maxPenalty * e^(-minutes / halfLife))
-        $multiplier = 1 - ($maxPenaltyDepth * exp(-$minutesSince / $halfLife));
-        
-        // Clamp multiplier between 0.05 and 1.0
-        $multiplier = min(1.0, max(0.05, $multiplier));
-
-        // Apply Multiplier to Base Score
-        $dynamicScore = $currentScore * $multiplier;
-
-        // Add Time Decay Bonus (helps cards recover as time passes)
-        $dynamicScore += ($minutesSince * $timeDecayRate);
-
-        if ($dynamicScore > $highestDynamicScore) {
-            $highestDynamicScore = $dynamicScore;
-            $bestCard = $card;
-        }
-    }
-
-    if (!$bestCard) {
-        return response()->json([
-            'message' => 'No flashcards available.',
-            'flash_card' => null
-        ], 404);
-    }
-
-    // Calculate debug multiplier for the response
-    $debugMultiplier = 1.0;
-    if ($bestCard->last_practiced_at) {
-        $mins = $now->diffInMinutes($bestCard->last_practiced_at, false);
-        $debugMultiplier = 1 - ($maxPenaltyDepth * exp(-max(0, $mins) / $halfLife));
-        $debugMultiplier = min(1.0, max(0.05, $debugMultiplier));
-    }
-
-    return response()->json([
-        'flash_card' => $bestCard,
-        'debug_dynamic_score' => round($highestDynamicScore, 4),
-        'debug_static_score' => $bestCard->priority_score,
-        'debug_multiplier' => round($debugMultiplier, 4),
-        'is_new_card' => false
-    ]);
-}
 }
