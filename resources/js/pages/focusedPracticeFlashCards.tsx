@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 import AppLayout from '@/layouts/app-layout';
 import { cn } from '@/lib/utils';
 import { focusedPracticeFlashCards } from '@/routes';
@@ -29,8 +30,6 @@ import type { BreadcrumbItem } from '@/types';
 
 // Utils & Icons
 import { getFenImageData } from '@/utils/chess';
-import { Spinner } from '@/components/ui/spinner';
-import { Skeleton } from '@/components/ui/skeleton';
 
 interface FlashCard {
     id: number;

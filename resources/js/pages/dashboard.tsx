@@ -21,6 +21,7 @@ import {
     CardDescription,
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { Skeleton } from '@/components/ui/skeleton';
 import AppLayout from '@/layouts/app-layout';
 import {
     dashboard,
@@ -29,8 +30,6 @@ import {
     blundersList,
 } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
-import { Spinner } from '@/components/ui/spinner';
-import { Skeleton } from '@/components/ui/skeleton';
 
 // Shadcn Components
 
