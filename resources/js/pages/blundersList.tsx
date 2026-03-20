@@ -26,6 +26,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FlashCard {
     id: number;
@@ -253,8 +254,75 @@ export default function BlundersList() {
     if (loading) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <div className="flex h-full w-full flex-col items-center justify-center">
-                    <Spinner className="size-10" />
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                    {/* Header Skeleton */}
+                    <div className="flex items-center justify-between pb-2">
+                        <Skeleton className="h-8 w-48" />
+                        <div className="flex gap-2">
+                            <Skeleton className="h-9 w-24" />
+                            <Skeleton className="h-9 w-24" />
+                        </div>
+                    </div>
+
+                    {/* Search Skeleton */}
+                    <Skeleton className="h-10 w-full" />
+
+                    {/* Grid of Skeleton Cards */}
+                    <div className="grid auto-rows-min gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div
+                                key={i}
+                                className="relative flex flex-col space-y-3 overflow-hidden rounded-xl border border-sidebar-border/70 bg-card p-4 dark:border-sidebar-border"
+                            >
+                                {/* Date */}
+                                <div className="flex justify-end">
+                                    <Skeleton className="h-3 w-20" />
+                                </div>
+
+                                {/* Image Placeholder */}
+                                <div className="relative aspect-square w-full overflow-hidden rounded-md border border-muted bg-white">
+                                    <Skeleton className="h-full w-full" />
+                                </div>
+
+                                {/* Correct Move Label + Text */}
+                                <div className="space-y-1">
+                                    <Skeleton className="h-3 w-24" />
+                                    <Skeleton className="h-5 w-32" />
+                                </div>
+
+                                {/* Grid Details (Opening, Note, ELO, Practiced) */}
+                                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-3 w-16" />
+                                        <Skeleton className="h-3 w-full" />
+                                    </div>
+                                    <div className="space-y-1 pt-[14px]">
+                                        <Skeleton className="h-6 w-full" />{' '}
+                                        {/* Matches Button Height */}
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-3 w-8" />
+                                        <Skeleton className="h-3 w-12" />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-3 w-20" />
+                                        <Skeleton className="h-3 w-16" />
+                                    </div>
+                                </div>
+
+                                {/* Footer (Badge + Link) */}
+                                <div className="mt-auto flex items-center justify-between border-t border-sidebar-border/50 pt-3">
+                                    <Skeleton className="h-5 w-20" />
+                                    <Skeleton className="h-4 w-24" />
+                                </div>
+
+                                {/* Edit Button */}
+                                <div className="pt-1">
+                                    <Skeleton className="h-8 w-full" />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             </AppLayout>
         );

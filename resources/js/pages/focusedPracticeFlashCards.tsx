@@ -30,6 +30,7 @@ import type { BreadcrumbItem } from '@/types';
 // Utils & Icons
 import { getFenImageData } from '@/utils/chess';
 import { Spinner } from '@/components/ui/spinner';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface FlashCard {
     id: number;
@@ -331,8 +332,81 @@ export default function FocusedPracticeFlashcards() {
     if (loadingLibrary) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <div className="flex h-full w-full flex-col items-center justify-center">
-                    <Spinner className="size-10" />
+                <Head title="Focused Practice Setup" />
+                <div className="flex h-full flex-1 flex-col gap-4 overflow-x-auto rounded-xl p-4">
+                    {/* Header Skeleton */}
+                    <div className="space-y-2 pb-2">
+                        <Skeleton className="h-8 w-64" />
+                        <Skeleton className="h-4 w-96" />
+                    </div>
+
+                    <Card className="overflow-hidden">
+                        <CardContent className="space-y-6 p-6">
+                            {/* Search & Toggle Skeleton */}
+                            <div className="flex items-center justify-between gap-4">
+                                <div className="relative flex-1">
+                                    <Skeleton className="absolute top-2.5 left-2.5 h-4 w-4" />
+                                    <Skeleton className="h-10 w-full pl-9" />
+                                </div>
+                                <Skeleton className="h-10 w-28" />
+                            </div>
+
+                            {/* Filter Panel Skeleton (Always visible in loading state to match default open state) */}
+                            <div className="rounded-lg border bg-muted/30 p-4">
+                                <div className="flex flex-wrap items-end gap-4">
+                                    {/* Accuracy Inputs */}
+                                    <div className="flex w-[160px] shrink-0 flex-col gap-1.5">
+                                        <Skeleton className="h-3 w-20" />
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-8 w-full" />
+                                            <Skeleton className="h-3 w-3" />
+                                            <Skeleton className="h-8 w-full" />
+                                        </div>
+                                    </div>
+                                    {/* ELO Inputs */}
+                                    <div className="flex w-[160px] shrink-0 flex-col gap-1.5">
+                                        <Skeleton className="h-3 w-16" />
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-8 w-full" />
+                                            <Skeleton className="h-3 w-3" />
+                                            <Skeleton className="h-8 w-full" />
+                                        </div>
+                                    </div>
+                                    {/* Date Range 1 */}
+                                    <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
+                                        <Skeleton className="h-3 w-24" />
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-8 flex-1" />
+                                            <Skeleton className="h-3 w-6" />
+                                            <Skeleton className="h-8 flex-1" />
+                                        </div>
+                                    </div>
+                                    {/* Date Range 2 */}
+                                    <div className="flex min-w-[200px] flex-1 flex-col gap-1.5">
+                                        <Skeleton className="h-3 w-28" />
+                                        <div className="flex items-center gap-2">
+                                            <Skeleton className="h-8 flex-1" />
+                                            <Skeleton className="h-3 w-6" />
+                                            <Skeleton className="h-8 flex-1" />
+                                        </div>
+                                    </div>
+                                    {/* Reset Button */}
+                                    <div className="ml-auto pb-[2px]">
+                                        <Skeleton className="h-8 w-20" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Results Summary & Action Skeleton */}
+                            <div className="flex items-center justify-between rounded-lg border bg-card p-4">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-5 w-32" />
+                                    <Skeleton className="h-3 w-48" />
+                                </div>
+                                <Skeleton className="h-12 w-40" />
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </AppLayout>
         );
