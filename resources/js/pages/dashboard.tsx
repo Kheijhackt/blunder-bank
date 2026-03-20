@@ -29,6 +29,7 @@ import {
     blundersList,
 } from '@/routes';
 import type { BreadcrumbItem } from '@/types';
+import { Spinner } from '@/components/ui/spinner';
 
 // Shadcn Components
 
@@ -93,21 +94,16 @@ export default function Dashboard() {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
                 <Head title="Dashboard" />
-                <div className="flex h-full items-center justify-center">
-                    <div className="space-y-4 text-center">
-                        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                        <p className="text-muted-foreground">
-                            Loading your stats...
-                        </p>
-                    </div>
+                <div className="flex h-full w-full flex-col items-center justify-center">
+                    <Spinner className="size-10" />
                 </div>
             </AppLayout>
         );
     }
 
     if (!stats) {
-return null;
-}
+        return null;
+    }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>

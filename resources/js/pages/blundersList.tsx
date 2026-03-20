@@ -19,6 +19,13 @@ import type { BreadcrumbItem } from '@/types';
 
 // Utils
 import { getFenImageData } from '@/utils/chess';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Spinner } from '@/components/ui/spinner';
 
 interface FlashCard {
     id: number;
@@ -246,10 +253,8 @@ export default function BlundersList() {
     if (loading) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <div className="flex h-full items-center justify-center">
-                    <p className="text-lg font-semibold text-muted-foreground">
-                        Loading your blunders...
-                    </p>
+                <div className="flex h-full w-full flex-col items-center justify-center">
+                    <Spinner className="size-10" />
                 </div>
             </AppLayout>
         );
@@ -542,14 +547,6 @@ export default function BlundersList() {
                                             <div className="grid grid-cols-2 gap-2 text-[11px]">
                                                 <div>
                                                     <span className="block font-bold text-muted-foreground uppercase">
-                                                        Note
-                                                    </span>
-                                                    <span className="block truncate">
-                                                        {card.note || '-'}
-                                                    </span>
-                                                </div>
-                                                <div>
-                                                    <span className="block font-bold text-muted-foreground uppercase">
                                                         Opening
                                                     </span>
                                                     <span className="block truncate">
@@ -557,6 +554,33 @@ export default function BlundersList() {
                                                             '-'}
                                                     </span>
                                                 </div>
+
+                                                <div className="flex flex-col justify-start pt-[14px]">
+                                                    <TooltipProvider>
+                                                        <Tooltip>
+                                                            <TooltipTrigger
+                                                                asChild
+                                                            >
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    className="h-6 w-full px-2 text-[10px]"
+                                                                    disabled={
+                                                                        !card.note
+                                                                    }
+                                                                >
+                                                                    Show Note
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent side="top">
+                                                                <p className="text-xs">
+                                                                    {card.note}
+                                                                </p>
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TooltipProvider>
+                                                </div>
+
                                                 <div>
                                                     <span className="block font-bold text-muted-foreground uppercase">
                                                         ELO

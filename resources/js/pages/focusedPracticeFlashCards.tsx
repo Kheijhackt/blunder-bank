@@ -29,6 +29,7 @@ import type { BreadcrumbItem } from '@/types';
 
 // Utils & Icons
 import { getFenImageData } from '@/utils/chess';
+import { Spinner } from '@/components/ui/spinner';
 
 interface FlashCard {
     id: number;
@@ -330,9 +331,8 @@ export default function FocusedPracticeFlashcards() {
     if (loadingLibrary) {
         return (
             <AppLayout breadcrumbs={breadcrumbs}>
-                <Head title="Focused Practice" />
-                <div className="flex h-full items-center justify-center">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <div className="flex h-full w-full flex-col items-center justify-center">
+                    <Spinner className="size-10" />
                 </div>
             </AppLayout>
         );
