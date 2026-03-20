@@ -55,7 +55,7 @@ export default function NewCardModal({
         if (open) {
             // Use setData to clear fields instead of reset which doesn't accept an object
             setData({
-                fen: '',
+                fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
                 correct_move: '',
                 note: '',
                 user_elo_at_time: '',

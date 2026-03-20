@@ -1,5 +1,5 @@
 import { Head } from '@inertiajs/react';
-import ShowGuideContent from '@/components/showGuideContent';
+import ShowGuideContent from '@/components/custom/showGuideContent';
 import AppLayout from '@/layouts/app-layout';
 import { guide } from '@/routes';
 import type { BreadcrumbItem } from '@/types';

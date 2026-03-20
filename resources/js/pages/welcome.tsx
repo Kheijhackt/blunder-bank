@@ -8,7 +8,7 @@ import {
     Zap,
     PenTool,
 } from 'lucide-react';
-import ShowGuideContent from '@/components/showGuideContent';
+import ShowGuideContent from '@/components/custom/showGuideContent';
 import { dashboard, login, register, blundersList } from '@/routes';
 
 export default function Welcome({

@@ -4,8 +4,8 @@ import { Filter, RotateCcw, Search } from 'lucide-react';
 import { useEffect, useState, useMemo } from 'react';
 
 // Shadcn Components
-import EditCardModal from '@/components/editCardModal';
-import NewCardModal from '@/components/newCardModal';
+import EditCardModal from '@/components/custom/editCardModal';
+import NewCardModal from '@/components/custom/newCardModal';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,16 +43,16 @@ const calculateAccuracy = (correct: number, wrong: number) => {
     const total = correct + wrong;
 
     if (total === 0) {
-return 0;
-}
+        return 0;
+    }
 
     return Math.round((correct / total) * 100);
 };
 
 const formatDate = (dateString: string | null) => {
     if (!dateString) {
-return 'Never';
-}
+        return 'Never';
+    }
 
     return new Date(dateString).toLocaleDateString(undefined, {
         year: 'numeric',
@@ -63,8 +63,8 @@ return 'Never';
 
 const parseDate = (dateString: string | null) => {
     if (!dateString) {
-return null;
-}
+        return null;
+    }
 
     return new Date(dateString);
 };
@@ -121,8 +121,8 @@ export default function BlundersList() {
                     .includes(query);
 
                 if (!noteMatch && !openingMatch) {
-return false;
-}
+                    return false;
+                }
             }
 
             const accuracy = calculateAccuracy(
@@ -131,39 +131,39 @@ return false;
             );
 
             if (accuracy < accuracyMin || accuracy > accuracyMax) {
-return false;
-}
+                return false;
+            }
 
             const elo = card.user_elo_at_time;
 
             if (elo !== null && elo !== undefined) {
                 if (eloMin !== '' && elo < eloMin) {
-return false;
-}
+                    return false;
+                }
 
                 if (eloMax !== '' && elo > eloMax) {
-return false;
-}
+                    return false;
+                }
             } else {
                 if (eloMin !== '' || eloMax !== '') {
-return false;
-}
+                    return false;
+                }
             }
 
             const createdAt = parseDate(card.created_at);
 
             if (createdAt) {
                 if (createdFrom && createdAt < new Date(createdFrom)) {
-return false;
-}
+                    return false;
+                }
 
                 if (createdTo) {
                     const toDate = new Date(createdTo);
                     toDate.setHours(23, 59, 59, 999);
 
                     if (createdAt > toDate) {
-return false;
-}
+                        return false;
+                    }
                 }
             }
 
@@ -171,20 +171,20 @@ return false;
 
             if (practicedFrom || practicedTo) {
                 if (!practicedAt) {
-return false;
-}
+                    return false;
+                }
 
                 if (practicedFrom && practicedAt < new Date(practicedFrom)) {
-return false;
-}
+                    return false;
+                }
 
                 if (practicedTo) {
                     const toDate = new Date(practicedTo);
                     toDate.setHours(23, 59, 59, 999);
 
                     if (practicedAt > toDate) {
-return false;
-}
+                        return false;
+                    }
                 }
             }
 
@@ -494,10 +494,10 @@ return false;
                                         | 'secondary' = 'default';
 
                                     if (accuracy < 50) {
-accuracyVariant = 'destructive';
-} else if (accuracy < 80) {
-accuracyVariant = 'secondary';
-}
+                                        accuracyVariant = 'destructive';
+                                    } else if (accuracy < 80) {
+                                        accuracyVariant = 'secondary';
+                                    }
 
                                     return (
                                         <div
