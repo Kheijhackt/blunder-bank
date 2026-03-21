@@ -169,7 +169,7 @@ export default function ShowGuideContent() {
                         <CardContent className="text-sm text-muted-foreground">
                             The exact board state <strong>before</strong> your
                             blunder. Since you manually added this card, the
-                            correct move is the one{' '}
+                            correct moves are the one{' '}
                             <strong>you identified</strong> from your own game
                             analysis.
                         </CardContent>

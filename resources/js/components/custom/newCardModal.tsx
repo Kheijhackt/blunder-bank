@@ -206,7 +206,7 @@ export default function NewCardModal({
                         {/* 3. CORRECT MOVE */}
                         <div className="space-y-2">
                             <Label htmlFor="new-move" className="font-semibold">
-                                Correct Move{' '}
+                                Correct Move/s{' '}
                                 <span className="text-destructive">*</span>
                             </Label>
                             <Input
@@ -215,7 +215,7 @@ export default function NewCardModal({
                                 onChange={(e) =>
                                     setData('correct_move', e.target.value)
                                 }
-                                placeholder="e.g., Nf3, O-O"
+                                placeholder="e.g., Nf3, O-O, Bxf4"
                                 className={`font-semibold ${!data.correct_move.trim() ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                             />
                             {!data.correct_move.trim() && (

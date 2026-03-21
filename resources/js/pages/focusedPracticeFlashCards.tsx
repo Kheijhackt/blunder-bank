@@ -531,7 +531,7 @@ export default function FocusedPracticeFlashcards() {
                                                         e.target.value,
                                                     )
                                                 }
-                                                placeholder="e.g., Nf3, O-O"
+                                                placeholder="e.g., Nf3"
                                                 className="h-12 font-mono text-lg"
                                                 disabled={submitting}
                                                 autoComplete="off"
@@ -597,7 +597,7 @@ export default function FocusedPracticeFlashcards() {
                                                 </AlertDescription>
                                             </Alert>
                                             <p className="mt-2 text-center text-xs text-muted-foreground">
-                                                Try entering the correct move
+                                                Try entering a correct move
                                                 again.
                                             </p>
                                         </div>
@@ -608,15 +608,7 @@ export default function FocusedPracticeFlashcards() {
                                 {/* Footer Info */}
                                 <div className="border-t pt-4">
                                     <p className="text-center text-xs text-muted-foreground">
-                                        Type standard algebraic notation (e.g.,{' '}
-                                        <span className="rounded bg-muted px-1 font-mono">
-                                            Nf3
-                                        </span>
-                                        ,{' '}
-                                        <span className="rounded bg-muted px-1 font-mono">
-                                            O-O
-                                        </span>
-                                        ).
+                                        Submit only ONE move at a time.
                                     </p>
                                 </div>
                             </div>

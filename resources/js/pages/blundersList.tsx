@@ -612,7 +612,7 @@ export default function BlundersList() {
                                             <div className="flex items-start justify-between gap-2">
                                                 <div className="flex-1 space-y-1">
                                                     <span className="text-[10px] font-bold text-muted-foreground uppercase">
-                                                        Correct Move
+                                                        Correct Moves
                                                     </span>
                                                     <p className="text-sm leading-tight font-semibold">
                                                         {card.correct_move}

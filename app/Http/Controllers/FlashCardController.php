@@ -169,8 +169,10 @@ class FlashCardController extends Controller
 
         $user = Auth::user();
         $answer = trim($request->answer);
-        $correct = trim($flashCard->correct_move);
-        $isCorrect = ($answer === $correct);
+
+        $correctOptions = array_map('trim', explode(',', $flashCard->correct_move));
+        $isCorrect = in_array($answer, $correctOptions, true);
+
         $now = Carbon::now('UTC');
 
         // 1. Update Card Stats
