@@ -8,6 +8,8 @@ use Laravel\Fortify\Features;
 Route::inertia('/', 'welcome', [
     'canRegister' => Features::enabled(Features::registration()),
 ])->name('home');
+Route::inertia('privacy-policy', 'privacyPolicy')->name('privacyPolicy');
+Route::inertia('terms-of-use','termsOfUse')->name('termsOfUse');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     // For Views

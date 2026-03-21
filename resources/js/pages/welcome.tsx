@@ -283,7 +283,22 @@ export default function Welcome({
                     </div>
                 </div>
                 {/* Footer Simple */}
-                <footer className="py-5 pt-20 text-center text-xs text-muted-foreground">
+                {/* Footer with Legal Links */}
+                <footer className="py-8 pt-20 text-center text-xs text-muted-foreground">
+                    <div className="mb-3 flex justify-center gap-6">
+                        <Link
+                            href="/privacy-policy"
+                            className="transition-colors hover:text-foreground hover:underline"
+                        >
+                            Privacy Policy
+                        </Link>
+                        <Link
+                            href="/terms-of-use"
+                            className="transition-colors hover:text-foreground hover:underline"
+                        >
+                            Terms of Use
+                        </Link>
+                    </div>
                     <p>
                         © {new Date().getFullYear()} Blunder Bank. Made by
                         Calify

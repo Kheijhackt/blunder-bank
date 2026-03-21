@@ -1,11 +1,13 @@
 import { Link } from '@inertiajs/react';
 import {
     BrainCircuit,
+    FileText,
     Goal,
     Info,
     LayoutGrid,
     LibraryBig,
     Send,
+    Shield,
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -27,7 +29,10 @@ import {
     dashboard,
     focusedPracticeFlashCards,
     guide,
+    home,
     practiceFlashCards,
+    privacyPolicy,
+    termsOfUse,
 } from '@/routes';
 import type { NavItem } from '@/types';
 
@@ -66,8 +71,18 @@ const mainNavItems: NavItem[] = [
 
 const footerNavItems: NavItem[] = [
     {
+        title: 'Privacy Policy',
+        href: privacyPolicy(),
+        icon: Shield,
+    },
+    {
+        title: 'Terms of Use',
+        href: termsOfUse(),
+        icon: FileText,
+    },
+    {
         title: 'Send Feedback',
-        href: 'https://docs.google.com/forms/d/e/1FAIpQLScmNx4z0hF40w7sEIS75k82WOthIH6Ofmh4AuoNrNPOfLd5MA/viewform?usp=publish-editor',
+        href: 'https://docs.google.com/forms/d/e/1FAIpQLScmNx4z0hF40w7sEIS75k82WOthIH6Ofmh4AuoNrNPOfLd5MA/viewform?hl=en',
         icon: Send,
     },
 ];
@@ -79,7 +94,7 @@ export function AppSidebar() {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
+                            <Link href={home()} prefetch>
                                 <AppLogo />
                             </Link>
                         </SidebarMenuButton>
