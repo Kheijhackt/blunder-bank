@@ -705,9 +705,10 @@ export default function FocusedPracticeFlashcards() {
                                         </Label>
                                         <div className="flex items-center gap-2">
                                             <Input
+                                                disabled
                                                 type="number"
                                                 min="0"
-                                                max="100"
+                                                max="0"
                                                 placeholder="0"
                                                 value={accuracyMin}
                                                 onChange={(e) =>
