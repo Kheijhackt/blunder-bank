@@ -20,6 +20,12 @@ class FlashCard extends Model
         'source_game_url',
     ];
 
+    protected $hidden = [
+        'user_id',
+        'updated_at',
+        'priority_score',
+    ];
+
     protected $casts = [
         'last_practiced_at'=> 'datetime',
     ];

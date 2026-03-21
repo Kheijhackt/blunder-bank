@@ -161,11 +161,11 @@ class FlashCardController extends Controller
         if (!$this->isAuthorized($flashCard)) {
             return $this->unauthorizedResponse();
         }
+        
+        $request->validate(['answer' => 'required|string']);
 
         $correctPenalty = 1.0;
         $incorrectPenalty = 10.0;
-        
-        $request->validate(['answer' => 'required|string']);
 
         $user = Auth::user();
         $answer = trim($request->answer);
@@ -199,6 +199,16 @@ class FlashCardController extends Controller
     public function getNextCard() {
         $user = Auth::user();
         $now = Carbon::now();
+        $hiddenFields = [
+            'correct_move',
+            'updated_at', 
+            'created_at', 
+            'times_correct', 
+            'times_wrong', 
+            'source_game_url',
+            'priority_score',
+            'last_practiced_at',
+        ];
 
         // --- CONFIGURATION ---
         $timeGrowthRate = 0.01;     // Multiplier increases by 0.01 per minute
@@ -211,6 +221,8 @@ class FlashCardController extends Controller
             ->first();
 
         if ($newCard) {
+            $newCard->makeHidden($hiddenFields);
+
             return response()->json([
                 'flash_card' => $newCard,
                 'debug_dynamic_score' => null,
@@ -265,6 +277,8 @@ class FlashCardController extends Controller
         if (!$bestCard) {
             return response()->json(['message' => 'No flashcards available.', 'flash_card' => null], 404);
         }
+
+        $bestCard->makeHidden($hiddenFields);
 
         // Debug calculations
         $debugMinutes = $now->diffInMinutes($bestCard->last_practiced_at, true);
